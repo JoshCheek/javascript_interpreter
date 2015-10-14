@@ -1,0 +1,67 @@
+http://www.ecma-international.org/ecma-262/6.0/index.html
+
+
+Object - A collection of zero or more properties
+  * Is a builtin type
+
+Property - Container that holds an object, primitive value, or function
+  Has a writable attribute
+
+Primitive Value
+  One of the following built-in types:
+  * Undefined
+  * Null
+  * Boolean
+  * Number
+  * String
+  * Symbol
+
+Function
+  * Callable object
+
+Method
+  A function that is associated with an object via a property
+
+Constructor
+  * A function that initializes an object
+  * When a constructor creates an object, that object implicitly references the constructor’s prototype property for the purpose of resolving property references. The constructor’s prototype property can be referenced by the program expression constructor.prototype, and properties added to an object’s prototype are shared, through inheritance, by all objects sharing the prototype. Alternatively, a new object may be created with an explicitly specified prototype by using the Object.create built-in function.
+
+String
+  * primitive value that is a finite ordered sequence of zero or more 16-bit unsigned integer
+
+
+Builtin objects:
+  * the global object
+  * Object
+  * Function
+  * Boolean
+  * Symbol
+  * Various Error objects
+  * Math
+  * Number
+  * Date
+  * String
+  * RegExp
+  * Array
+  * nine different kinds of Typed Arrays whose elements all have a specific numeric data representation;
+  * Map
+  * Set
+  * JSON
+  * ArrayBuffer
+  * DataView
+  * generator functions
+  * Promise
+  * Proxy
+  * Reflect
+
+Builtin operators:
+  unary operations
+  multiplicative operators
+  additive operators
+  bitwise shift operators
+  relational operators
+  equality operators
+  binary bitwise operators
+  binary logical operators
+  assignment operators
+  comma operator
