@@ -47,7 +47,7 @@ RSpec.describe 'The JS interpreter' do
   end
 
   describe 'core libs' do
-    describe 'numbers' do
+    describe 'numbers', t:true do
       it 'evaluates to a floating point number of the same value' do
         interpreter = interprets! '1'
         expect(interpreter.result).to eq 1.0
@@ -59,7 +59,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'String' do
+    describe 'String', t:true do
       it '#+ concatenates' do
         interprets! '"a" + "b"', result: "ab"
       end

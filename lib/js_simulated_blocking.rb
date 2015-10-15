@@ -27,27 +27,21 @@ class JsSimulatedBlocking
   private
 
   def interpret_sexp(sexp)
-    if sexp.first.kind_of? Array
-      return sexp.inject nil do |_, child|
-        interpret_sexp child
-      end
-    end
+    sexp.first.kind_of? Array and
+      return sexp.inject(nil) { |_, child| interpret_sexp child }
 
     type, *rest = sexp
-
     case type
-    when :expression
-      rest.inject nil do |_, child|
-        interpret_sexp child
-      end
-    when :lit
-      rest.first.to_f
-    when :add
-      left, right = rest.map { |child|
-        interpret_sexp child
-      }
-      left + right
+    when :expression then rest.inject(nil) { |_, child| interpret_sexp child }
+    when :str        then unescape_string rest.first
+    when :lit        then rest.first.to_f
+    when :add        then rest.map { |child| interpret_sexp child }.inject(:+)
     else raise "What to do with AST: #{type.inspect}"
     end
+  end
+
+  # ehh, good enough for now, seems like the parser should handle this, though
+  def unescape_string(string)
+    string[1...-1]
   end
 end
