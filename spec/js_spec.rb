@@ -1,5 +1,11 @@
 require 'js_simulated_blocking'
 
+RSpec.configure do |config|
+  config.before not_implemented: true do
+    pending 'not implemented!'
+  end
+end
+
 RSpec.describe 'The JS interpreter' do
   def interprets!(code, assertions={})
     interpreter = JsSimulatedBlocking.from_string(code, stdout: StringIO.new).call
@@ -22,7 +28,7 @@ RSpec.describe 'The JS interpreter' do
                 result: 3
   end
 
-  describe 'function instantiation' do
+  describe 'function instantiation', not_implemented: true do
     it 'makes a new object whose __proto__ is set to the function\'s prototype' do
       interpreter = interprets! 'var klass = function() {}; var instance = new klass()'
       instance    = interpreter.local :instance
@@ -40,15 +46,15 @@ RSpec.describe 'The JS interpreter' do
       interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
     end
 
-    it 'can return early from the function', current: true do
+    it 'can return early from the function', not_implemented: true do
       interprets! '(function() { return 1; return 2; })(10000)', result: 1
     end
 
-    it 'can see variables from the enclosing environment' do
+    it 'can see variables from the enclosing environment', not_implemented: true do
       interprets! 'var outer = 1; var fn = function() { return outer }; fn()', result: 1
     end
 
-    it 'has its own set of local variables' do
+    it 'has its own set of local variables', not_implemented: true do
       interprets! 'var outer = 1; var fn = function(inner) { return outer + inner + 3 }; fn(2)', result: 6
     end
   end
@@ -85,7 +91,7 @@ RSpec.describe 'The JS interpreter' do
     end
 
     # TODO: will probably work better to mock out the time
-    describe 'Date' do
+    describe 'Date', not_implemented: true do
       it 'initializes to the current time' do
         interpreter = interprets! 'new Date()'
         js_time, ruby_time = interpreter.result, Time.now
@@ -103,7 +109,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'console' do
+    describe 'console', not_implemented: true do
       specify '#log prints strings to stdout' do
         interprets! 'console.log("hello")', logged: ['hello']
       end

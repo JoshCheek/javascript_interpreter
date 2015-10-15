@@ -10,7 +10,7 @@ nonexistent_path                          = from_root 'path/to/nothing'
 fixture_illustrates_simulated_nonblocking = from_root 'examples/simulated_nonblocking.js'
 fixture_invalid_syntax                    = from_root 'examples/invalid.js'
 
-RSpec.describe 'Acceptance' do
+RSpec.describe 'Acceptance', acceptance: true do
   it 'can run an example program that illustrates the simulated blocking' do
     pending 'Haven\'t gotten around to making it work yet ;)'
     stdout, stderr, status = Open3.capture3(bin_path, fixture_illustrates_simulated_nonblocking)
