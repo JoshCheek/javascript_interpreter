@@ -1,5 +1,5 @@
-require 'js_simulated_blocking/env'
 require 'js_simulated_blocking/parse'
+require 'js_simulated_blocking/stdlib'
 require 'js_simulated_blocking/interpreter'
 
 class JsSimulatedBlocking
@@ -12,10 +12,11 @@ class JsSimulatedBlocking
 
   attr_accessor :interpreter
   def initialize(instructions:, stdout:)
+    global_env = Stdlib.global(stdout: stdout)
+
     self.interpreter = Interpreter.new(
       instructions: instructions,
-      stdout:       stdout,
-      env:          Env.new,
+      env:          global_env,
     )
   end
 

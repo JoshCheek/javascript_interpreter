@@ -8,11 +8,19 @@ end
 
 RSpec.describe 'The JS interpreter' do
   def interprets!(code, assertions={})
-    interpreter = JsSimulatedBlocking.eval code, stdout: StringIO.new
+    stdout      = StringIO.new
+    interpreter = JsSimulatedBlocking.eval code, stdout: stdout
     assertions.each do |type, expectation|
       case type
-      when :result then expect(interpreter.result).to eq expectation
-      when :locals then expect(interpreter.env.all_visible).to eq expectation
+      when :result
+        expect(interpreter.result).to eq expectation
+      when :logged
+        expect(stdout.string).to eq expectation
+      when :locals
+        locals = interpreter.env.all_visible
+        expectation.each do |name, value|
+          expect(locals.fetch name).to eq value
+        end
       else raise "You need to define the assertion for #{type.inspect}"
       end
     end
@@ -109,9 +117,9 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'console', not_implemented: true, t: true do
+    describe 'console', passing: true do
       specify '#log prints strings to stdout' do
-        interprets! 'console.log("hello")', logged: ['hello']
+        interprets! 'console.log("hello")', logged: "hello\n"
       end
     end
 

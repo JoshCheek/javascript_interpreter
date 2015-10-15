@@ -1,3 +1,5 @@
+require 'js_simulated_blocking/functions'
+
 class JsSimulatedBlocking
   class Instructions
     attr_accessor :instructions
@@ -12,6 +14,21 @@ class JsSimulatedBlocking
 
     def empty?
       instructions.empty?
+    end
+
+    def setup
+      if next_offset != InternalFunction::BEGINNING
+        error_info = {next_offset: next_offset, expected: InternalFunction::BEGINNING}
+        raise error_info.inspect
+      end
+      begin_function InternalFunction::BEGINNING
+      invoke_internal
+
+      if next_offset != InternalFunction::ENDING
+        error_info = {next_offset: next_offset, expected: InternalFunction::ENDING}
+        raise error_info.inspect
+      end
+      end_function InternalFunction::BEGINNING
     end
 
     def self.instruction(name, &body)
@@ -34,7 +51,6 @@ class JsSimulatedBlocking
     instruction(:push_array)      { [:push_array] }
     instruction(:push_env)        { [:push_env] }
     instruction(:pop_env)         { [:pop_env] }
-    instruction(:invoke)          { [:invoke] }
     instruction(:declare_var)     { [:declare_var] }
     instruction(:declare_arg)     { [:declare_arg] }
     instruction(:pop)             { [:pop] }
@@ -43,9 +59,11 @@ class JsSimulatedBlocking
     instruction(:resolve)         { [:resolve] }
     instruction(:swap_top)        { [:swap_top] }
     instruction(:dot_access)      { [:dot_access] }
+    instruction(:invoke)          { [:invoke] }
+    instruction(:invoke_internal) { [:invoke_internal] }
 
-    instruction :begin_function do
-      [:begin_function, -1]
+    instruction :begin_function do |end_ofset|
+      [:begin_function, end_ofset]
     end
 
     instruction :end_function do |beginning_offset|

@@ -1,13 +1,19 @@
+require 'js_simulated_blocking/functions'
+
+# TODO
+# rename begin_function -> function_begin
+#        end_function   -> function_end
+#        invoke         -> function_call
+#
+# consolidate interpret_exprs into call
 class JsSimulatedBlocking
   class Interpreter
-    Function = Struct.new :env, :beginning, :ending
+    attr_accessor :stack, :instructions, :env
 
-    attr_accessor :stdout, :stack, :instructions, :env
-    def initialize(instructions:, stdout:, env:)
+    def initialize(instructions:, env:)
       self.instructions = instructions
-      self.stdout       = stdout
+      self.env          = env
       self.stack        = []
-      self.env          = Env.new
     end
 
     def call
@@ -78,8 +84,18 @@ class JsSimulatedBlocking
           function       = stack.pop
           env            = Env.new locals: {}, parent: function.env
           current_offset = function.beginning
-        when :return
+          stack.push function if function.internal?
+        when :invoke_internal
+          function = stack.pop
+          args     = stack.pop
+          function.call(args)
+        when :return, :end_function
           current_offset = stack.pop
+        when :dot_access
+          name   = stack.pop
+          obj    = stack.pop
+          method = obj.fetch name
+          stack.push method
         else
           print "\e[41;37m#{{instruction: instruction, args: args}.inspect}\e[0m\n"
           require "pry"

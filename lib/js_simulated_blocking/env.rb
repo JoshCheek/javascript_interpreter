@@ -11,6 +11,7 @@ class JsSimulatedBlocking
 
     def declare(name, value)
       locals[name] = value
+      self
     end
 
     def all_visible

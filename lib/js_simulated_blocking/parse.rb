@@ -23,7 +23,10 @@ class JsSimulatedBlocking
     end
 
     def call
-      accept ast if instructions.empty?
+      if instructions.empty?
+        instructions.setup
+        accept ast
+      end
       self
     end
 
@@ -56,15 +59,15 @@ class JsSimulatedBlocking
     end
 
     def visit_FunctionExprNode(node)
-      offset = instructions.next_offset
-      instructions.begin_function
+      begin_offset = instructions.next_offset
+      instructions.begin_function -1
       node.arguments.each do |arg|
         instructions.push arg.value.intern
         instructions.declare_arg
       end
       instructions.pop # args that are no longer being used
       accept node.function_body.value
-      instructions.end_function offset
+      instructions.end_function begin_offset
     end
 
     def visit_FunctionCallNode(node)
