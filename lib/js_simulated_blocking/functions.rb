@@ -11,9 +11,11 @@ class JsSimulatedBlocking
     BEGINNING = 0
     ENDING    = 2
 
-    attr_accessor :block
+    attr_accessor :name, :block, :keys
 
-    def initialize(env: Env.new, &block)
+    def initialize(name: nil, env: Env.new, &block)
+      self.keys  = {}
+      self.name  = name
       self.block = block
       super env, BEGINNING, ENDING
     end

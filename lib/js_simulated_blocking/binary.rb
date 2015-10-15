@@ -13,9 +13,10 @@ class JsSimulatedBlocking
       new(**args).call
     end
 
-    def initialize(program_name:, argv:, stdout:, stderr:)
+    def initialize(program_name:, argv:, stdout:, stderr:, time:)
       self.argv         = argv
       self.stdout       = stdout
+      self.time         = time
       self.stderr       = stderr
       self.program_name = program_name
     end
@@ -31,7 +32,7 @@ class JsSimulatedBlocking
         raise InvalidInvocation.new(program_name, "No such file: #{filename.inspect}")
 
       javascript = File.read(filename)
-      JsSimulatedBlocking.eval(javascript, stdout: stdout)
+      JsSimulatedBlocking.eval(javascript, stdout: stdout, time: time)
       return 0
 
     rescue JsSimulatedBlocking::Error => err
@@ -44,7 +45,7 @@ class JsSimulatedBlocking
 
     private
 
-    attr_accessor :program_name, :argv, :stdout, :stderr
+    attr_accessor :program_name, :argv, :stdout, :stderr, :time
 
     def filename
       argv.first

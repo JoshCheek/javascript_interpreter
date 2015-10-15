@@ -6,10 +6,38 @@ RSpec.configure do |config|
   end
 end
 
+require 'time'
+class MockTime < Time
+  def self.for(callable)
+    callable ||= lambda { Time.now }
+    Class.new self do
+      define_method(:now) { callable.call }
+    end
+  end
+
+  def where_now_is(callable)
+    @get_now = callable
+    self
+  end
+
+  def now
+    get_now.call
+  end
+
+  private
+
+  def get_now
+    @get_now || lambda { super }
+  end
+end
+
 RSpec.describe 'The JS interpreter' do
-  def interprets!(code, assertions={})
+  def interprets!(code, assertions_and_attrs={})
+    time_proc   = assertions_and_attrs.delete :time
+    assertions  = assertions_and_attrs
+    time        = MockTime.for time_proc
     stdout      = StringIO.new
-    interpreter = JsSimulatedBlocking.eval code, stdout: stdout
+    interpreter = JsSimulatedBlocking.eval code, stdout: stdout, time: time
     assertions.each do |type, expectation|
       case type
       when :result
@@ -98,18 +126,23 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    # TODO: will probably work better to mock out the time
-    describe 'Date', not_implemented: true do
-      it 'initializes to the current time' do
-        interpreter = interprets! 'new Date()'
-        js_time, ruby_time = interpreter.result, Time.now
+    describe 'Date' do
+      it 'initializes to the current time', not_implemented: true do
+        ruby_time   = Time.now
+        interpreter = interprets! 'new Date()', time: lambda { time }
+        js_time     = interpreter.result
         expect(js_time.year ).to eq ruby_time.year
         expect(js_time.month).to eq ruby_time.month
         expect(js_time.day  ).to eq ruby_time.day
         expect(js_time.sec  ).to eq ruby_time.sec
       end
 
-      it 'subtracts to milliseconds' do
+      it 'has a to_s that matches "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"', not_implemented: true do
+        ruby_time = Time.parse "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"
+        interprets! 'new Date().toString()', time: lambda { time }, result: "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"
+      end
+
+      it 'subtracts to milliseconds', not_implemented: true do
         interpreter = interprets! 'new Date() - new Date()'
         milliseconds = interpreter.result
         expect(milliseconds).to be >= 0
@@ -123,7 +156,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'setTimeout' do
+    describe 'setTimeout', not_implemented: true do
       context 'when given a function and a duration' do
         it 'returns immediately, placing the callback into the event queue once the duration has passed'
       end

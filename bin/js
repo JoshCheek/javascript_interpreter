@@ -7,4 +7,5 @@ exit JsSimulatedBlocking::Binary.call(
   argv:         ARGV,
   stderr:       $stderr,
   stdout:       $stdout,
+  time:         Time,
 )

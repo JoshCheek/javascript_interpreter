@@ -11,8 +11,8 @@ class JsSimulatedBlocking
   end
 
   attr_accessor :interpreter
-  def initialize(instructions:, stdout:)
-    global_env = Stdlib.global(stdout: stdout)
+  def initialize(instructions:, stdout:, time:)
+    global_env = Stdlib.global(stdout: stdout, time: time)
 
     self.interpreter = Interpreter.new(
       instructions: instructions,
