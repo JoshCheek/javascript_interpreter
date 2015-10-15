@@ -1,7 +1,18 @@
 require 'js_simulated_blocking'
 
 RSpec.describe 'The JS interpreter' do
-  it 'can set and lookup local variables' do
+  def interprets!(code, assertions={})
+    interpreter = JsSimulatedBlocking.from_string(code, stdout: StringIO.new).call
+    assertions.each do |type, expectation|
+      case type
+      when :result then expect(interpreter.result).to eq expectation
+      else raise "You need to define the assertion for #{type.inspect}"
+      end
+    end
+    interpreter
+  end
+
+  it 'can set and lookup local variables', t: true do
     interprets! 'var a = 1; var b = 2; a',
                 locals: {a: 1, b: 2},
                 result: 2
@@ -34,20 +45,20 @@ RSpec.describe 'The JS interpreter' do
     end
   end
 
-  def interprets!(code, assertions={})
-    interpreter = JsSimulatedBlocking.from_string(code, stdout: StringIO.new)
-    interpreter.call
-    assertions.each do |type, expectation|
-      case type
-      when :result then expect(interpreter.result).to eq expectation
-      else raise "You need to define the assertion for #{type.inspect}"
+  describe 'core libs' do
+    describe 'singleton literals', passing: true do
+      it 'interprets true' do
+        interprets! 'true', result: true
+      end
+      it 'interprets false' do
+        interprets! 'false', result: false
+      end
+      it 'interprets null' do
+        interprets! 'null', result: nil
       end
     end
-    interpreter
-  end
 
-  describe 'core libs' do
-    describe 'numbers', t:true do
+    describe 'numbers', passing: true do
       it 'evaluates to a floating point number of the same value' do
         interpreter = interprets! '1'
         expect(interpreter.result).to eq 1.0
@@ -59,7 +70,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'String', t:true do
+    describe 'String', passing: true do
       it '#+ concatenates' do
         interprets! '"a" + "b"', result: "ab"
       end
