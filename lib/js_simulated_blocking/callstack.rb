@@ -23,6 +23,10 @@ class JsSimulatedBlocking
 
 
   class NullStackFrame
+    def sexp
+      [:finished]
+    end
+
     def all_locals
       {}
     end
