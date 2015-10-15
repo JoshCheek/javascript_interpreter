@@ -55,9 +55,6 @@ RSpec.describe 'The JS interpreter' do
     interpreter
   end
 
-  # uhm... I'm actually not sure if this is what parens do
-  # it 'can turn statements into expressions with parentheses'
-
   it 'can set and lookup local variables', passing: true do
     interprets! 'var a = 1, b = 2; a+b',
                 locals: {a: 1, b: 2},
