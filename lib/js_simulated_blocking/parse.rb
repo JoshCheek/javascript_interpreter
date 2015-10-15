@@ -12,11 +12,22 @@ class JsSimulatedBlocking
 
     def self.string_to_sexp(raw_js)
       if ast=RKelly::Parser.new.parse(raw_js)
-        new.accept(ast)
+        new([], ast).call.sexp
       else
         # RKelly raises for some errors, and for others just returns nil
         raise RKelly::SyntaxError, "parser did not return an ast"
       end
+    end
+
+    attr_accessor :sexp, :ast
+
+    def initialize(sexp, ast)
+      self.sexp, self.ast = sexp, ast
+    end
+
+    def call
+      self.sexp = accept ast if sexp.empty?
+      self
     end
 
     def accept(target)
@@ -24,12 +35,12 @@ class JsSimulatedBlocking
     end
 
     def visit_SourceElementsNode(node)
-      elements = node.value.map { |value| value.accept self }
+      elements = node.value.map { |value| accept value }
       [:elements, *elements]
     end
 
     def visit_AddNode(node)
-      [:add, node.left.accept(self), node.value.accept(self)]
+      [:add, accept(node.left), accept(node.value)]
     end
 
     def visit_VarStatementNode(node)
@@ -37,21 +48,21 @@ class JsSimulatedBlocking
         decl.constant? and raise "Haven't checked this out yet: #{decl.to_sexp.inspect}"
         sexp       = [decl.name.to_s.intern]
         assignment = decl.value
-        sexp << assignment.value.accept(self) if assignment
+        sexp << accept(assignment.value) if assignment
         sexp
       end
       [:vars, *declarations]
     end
 
     def visit_FunctionExprNode(node)
-      body = node.function_body.value.accept(self)
+      body = accept node.function_body.value
       args = node.arguments.map(&:value).map(&:intern)
       [:function, args, body]
     end
 
     def visit_FunctionCallNode(node)
-      receiver  = node.value.accept(self)
-      arguments = node.arguments.value.map { |arg| arg.accept self }
+      receiver  = accept node.value
+      arguments = node.arguments.value.map { |arg| accept arg }
       [:function_call, receiver, arguments]
     end
 
@@ -62,9 +73,9 @@ class JsSimulatedBlocking
     def visit_StringNode(node)  [:string,  node.value[1...-1]]      end # shitty escaping >.<
     def visit_NumberNode(node)  [:number,  node.value.to_f]         end
     def visit_ResolveNode(node) [:resolve, node.value.intern]       end
-    def visit_ReturnNode(node)  [:return,  node.value.accept(self)] end
+    def visit_ReturnNode(node)  [:return,  accept(node.value)] end
 
-    def visit_ParentheticalNode(node)       node.value.accept self  end
-    def visit_ExpressionStatementNode(node) node.value.accept self  end
+    def visit_ParentheticalNode(node)       accept node.value end
+    def visit_ExpressionStatementNode(node) accept node.value end
   end
 end
