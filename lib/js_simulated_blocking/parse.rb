@@ -1,3 +1,4 @@
+require 'rkelly'
 require 'js_simulated_blocking/errors'
 require 'js_simulated_blocking/instructions'
 
@@ -135,6 +136,12 @@ class JsSimulatedBlocking
 
     def visit_ExpressionStatementNode(node)
       accept node.value
+    end
+
+    def visit_DotAccessorNode(node)
+      accept node.value
+      instructions.push node.accessor.intern
+      instructions.dot_access
     end
   end
 end

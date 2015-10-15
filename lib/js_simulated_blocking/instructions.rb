@@ -42,6 +42,7 @@ class JsSimulatedBlocking
     instruction(:return)          { [:return] }
     instruction(:resolve)         { [:resolve] }
     instruction(:swap_top)        { [:swap_top] }
+    instruction(:dot_access)      { [:dot_access] }
 
     instruction :begin_function do
       [:begin_function, -1]
