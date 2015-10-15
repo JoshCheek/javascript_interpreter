@@ -48,20 +48,22 @@ end
 
 class JsSimulatedBlocking
   attr_accessor :stdout, :stack, :instructions, :env
-  attr_accessor :result
 
   # TODO: rename sexp -> instructions
   def initialize(sexp:, stdout:)
     self.instructions = sexp
     self.stdout       = stdout
-    self.result       = nil
     self.stack        = []
     self.env          = Env.new
   end
 
   def call
-    self.result = interpret_exprs instructions
+    interpret_exprs instructions
     self
+  end
+
+  def result
+    stack.last
   end
 
   private
@@ -72,10 +74,10 @@ class JsSimulatedBlocking
     function_locations = []
     current_result     = :no_result_was_set
 
-    puts "-----  BEGIN  -----"
+    # puts "-----  BEGIN  -----"
     while expr = exprs[current_offset]
       instruction, *args = expr
-      p offset: current_offset, instruction: expr
+      # p offset: current_offset, instruction: expr
       current_result = case instruction
       when :push
         stack.push args.first
@@ -86,6 +88,10 @@ class JsSimulatedBlocking
       when :declare_var
         name  = stack.pop
         value = stack.pop
+        env.declare name, value
+      when :declare_arg
+        name  = stack.pop
+        value = stack.last.pop
         env.declare name, value
       when :pop
         stack.pop
@@ -116,30 +122,31 @@ class JsSimulatedBlocking
         stack.push first
         stack.push second
       when :push_array
-        require "pry"
-        binding.pry
         element = stack.pop
         array   = stack.last
         array.push element
-        require "pry"
-        binding.pry
       when :invoke
-        args = stack.pop
-        if args.any?
-          require "pry"
-          binding.pry
-        end
         function       = stack.pop
         env            = Env.new locals: {}, parent: function.env
         current_offset = function.beginning
       when :return
+        if !stack.last.kind_of?(Fixnum)
+          require "pry"
+          binding.pry
+        end
         current_offset = stack.pop
       else
         print "\e[41;37m#{{instruction: instruction, args: args}.inspect}\e[0m\n"
         require "pry"
         binding.pry
       end
-      current_offset += 1
+
+      begin
+        current_offset += 1
+      rescue
+        require "pry"
+        binding.pry
+      end
     end
     current_result
   end

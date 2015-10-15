@@ -39,6 +39,7 @@ class JsSimulatedBlocking
     instruction(:pop_env)         { [:pop_env] }
     instruction(:invoke)          { [:invoke] }
     instruction(:declare_var)     { [:declare_var] }
+    instruction(:declare_arg)     { [:declare_arg] }
     instruction(:pop)             { [:pop] }
     instruction(:add)             { [:add] }
     instruction(:return)          { [:return] }
@@ -116,7 +117,11 @@ class JsSimulatedBlocking
     def visit_FunctionExprNode(node)
       offset = instructions.next_offset
       instructions.begin_function
-      node.arguments.each { |arg| instructions.declare_arg arg.value.intern }
+      node.arguments.each { |arg|
+        instructions.push arg.value.intern
+        instructions.declare_arg
+      }
+      instructions.pop # args that are no longer being used
       accept node.function_body.value
       instructions.end_function offset
     end
@@ -138,6 +143,9 @@ class JsSimulatedBlocking
         accept arg              # push the arg
         instructions.push_array # onto the array
       end
+
+      # function is on the top of the stack
+      instructions.swap_top
 
       # invoke the function
       instructions.invoke
