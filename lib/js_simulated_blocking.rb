@@ -23,7 +23,7 @@ class JsSimulatedBlocking
     end
 
     def resolve(name)
-      locals.fetch name
+      locals.fetch(name) { parent.resolve name }
     end
     def NULL.resolve(name)
       raise "No variable named: #{name.inspect}"

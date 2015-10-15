@@ -37,24 +37,24 @@ RSpec.describe 'The JS interpreter' do
     end
   end
 
-  describe 'method invocation' do
-    it 'evaluates to the return value when called', passing: true do
+  describe 'method invocation', passing: true do
+    it 'evaluates to the return value when called' do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
 
-    it 'passes the arguments to the function', passing: true do
+    it 'passes the arguments to the function' do
       interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
     end
 
-    it 'can return early from the function', passing: true do
+    it 'can return early from the function' do
       interprets! '(function() { return 1; return 2; })(10000)', result: 1
     end
 
-    it 'can see variables from the enclosing environment', not_implemented: true do
+    it 'can see variables from the enclosing environment' do
       interprets! 'var outer = 1; var fn = function() { return outer }; fn()', result: 1
     end
 
-    it 'has its own set of local variables', not_implemented: true do
+    it 'has its own set of local variables' do
       interprets! 'var outer = 1; var fn = function(inner) { return outer + inner + 3 }; fn(2)', result: 6
     end
   end
