@@ -31,13 +31,12 @@ class JsSimulatedBlocking
     env                = self.env
     current_offset     = 0
     function_locations = []
-    current_result     = :no_result_was_set
 
     # puts "-----  BEGIN  -----"
     while expr = exprs[current_offset]
       instruction, *args = expr
       # p offset: current_offset, instruction: expr
-      current_result = case instruction
+      case instruction
       when :push
         stack.push args.first
       when :resolve
@@ -86,24 +85,13 @@ class JsSimulatedBlocking
         env            = Env.new locals: {}, parent: function.env
         current_offset = function.beginning
       when :return
-        if !stack.last.kind_of?(Fixnum)
-          require "pry"
-          binding.pry
-        end
         current_offset = stack.pop
       else
         print "\e[41;37m#{{instruction: instruction, args: args}.inspect}\e[0m\n"
         require "pry"
         binding.pry
       end
-
-      begin
-        current_offset += 1
-      rescue
-        require "pry"
-        binding.pry
-      end
+      current_offset += 1
     end
-    current_result
   end
 end
