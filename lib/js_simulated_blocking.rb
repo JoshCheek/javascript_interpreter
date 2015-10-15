@@ -8,9 +8,8 @@ class JsSimulatedBlocking
 
   attr_accessor :stdout, :stack, :instructions, :env
 
-  # TODO: rename sexp -> instructions
-  def initialize(sexp:, stdout:)
-    self.instructions = sexp
+  def initialize(instructions:, stdout:)
+    self.instructions = instructions
     self.stdout       = stdout
     self.stack        = []
     self.env          = Env.new

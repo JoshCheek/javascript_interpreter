@@ -5,13 +5,13 @@ require 'js_simulated_blocking/instructions'
 class JsSimulatedBlocking
   class Parse
     def self.string(raw_js, **initialization_attrs)
-      sexp = string_to_sexp raw_js
-      JsSimulatedBlocking.new sexp: sexp, **initialization_attrs
+      instructions = string_to_instructions raw_js
+      JsSimulatedBlocking.new instructions: instructions, **initialization_attrs
     rescue RKelly::SyntaxError => err
       raise JsSimulatedBlocking::SyntaxError, err.message
     end
 
-    def self.string_to_sexp(raw_js)
+    def self.string_to_instructions(raw_js)
       if ast=RKelly::Parser.new.parse(raw_js)
         new(Instructions.new, ast).call.instructions.to_a
       else
