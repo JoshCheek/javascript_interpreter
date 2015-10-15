@@ -1,32 +1,77 @@
 RSpec.describe 'The JS interpreter' do
-  it 'can set and lookup local variables'
+  it 'can set and lookup local variables' do
+    interprets! 'var a = 1; var b = 2; a',
+                locals: {a: 1, b: 2},
+                result: 2
+  end
 
   describe 'function instantiation' do
-    it 'makes a new object whose __proto__ is set to the function\'s prototype'
+    it 'makes a new object whose __proto__ is set to the function\'s prototype' do
+      interpreter = interprets! 'var klass = function() {}; var instance = new klass()'
+      instance    = interpreter.local :instance
+      klass       = interpreter.local :klass
+      assert_object instance, constructor: klass, __proto__: klass.prototype
+    end
   end
 
   describe 'method invocation' do
-    it 'passes the arguments to the function'
-    it 'can see variables from the enclosing environment'
-    it 'has its own set of local variables'
+    it 'evaluates to the return value when called' do
+      interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
+    end
+
+    it 'passes the arguments to the function' do
+      interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
+    end
+
+    it 'can see variables from the enclosing environment' do
+      interprets! 'var outer = 1; var fn = function() { return outer }; fn()', result: 1
+    end
+
+    it 'has its own set of local variables' do
+      interprets! 'var outer = 1; var fn = function(inner) { return outer + inner + 3 }; fn(2)', result: 6
+    end
   end
 
   describe 'core libs' do
     describe 'numbers' do
-      it 'evaluates to a floating point number of the same value'
+      it 'evaluates to a floating point number of the same value' do
+        interprets! '1', result: 1
+      end
+
+      specify '#+ adds numbers together' do
+        interprets! '1+2', result: 3
+      end
     end
 
     describe 'String' do
-      it 'treats addition as concatenation'
+      it '#+ concatenates' do
+        interprets! '"a" + "b"', result: "ab"
+      end
     end
 
+    # TODO: will probably work better to mock out the time
     describe 'Date' do
-      it 'initializes to the current time'
-      it 'subtracts to milliseconds'
+      it 'initializes to the current time' do
+        interpreter = interprets! 'new Date()'
+        js_time, ruby_time = interpreter.result, Time.now
+        expect(js_time.year ).to eq ruby_time.year
+        expect(js_time.month).to eq ruby_time.month
+        expect(js_time.day  ).to eq ruby_time.day
+        expect(js_time.sec  ).to eq ruby_time.sec
+      end
+
+      it 'subtracts to milliseconds' do
+        interpreter = interprets! 'new Date() - new Date()'
+        milliseconds = interpreter.result
+        expect(milliseconds).to be >= 0
+        expect(milliseconds).to be < 100 # tenth of a second
+      end
     end
 
     describe 'console' do
-      specify '#log prints strings to stdout'
+      specify '#log prints strings to stdout' do
+        interprets! 'console.log("hello")', logged: ['hello']
+      end
     end
 
     describe 'setTimeout' do
