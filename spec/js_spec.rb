@@ -8,7 +8,7 @@ end
 
 RSpec.describe 'The JS interpreter' do
   def interprets!(code, assertions={})
-    interpreter = JsSimulatedBlocking.from_string(code, stdout: StringIO.new).call
+    interpreter = JsSimulatedBlocking::Parse.string(code, stdout: StringIO.new).call
     assertions.each do |type, expectation|
       case type
       when :result then expect(interpreter.result).to eq expectation

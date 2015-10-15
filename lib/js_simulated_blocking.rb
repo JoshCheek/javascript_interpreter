@@ -1,29 +1,9 @@
 require 'rkelly'
-require 'js_simulated_blocking/errors'
+require 'js_simulated_blocking/parse'
 require 'js_simulated_blocking/callstack'
-require 'js_simulated_blocking/ast_to_sexp'
 
 
 class JsSimulatedBlocking
-  def self.from_string(raw_js, stdout:)
-    JsSimulatedBlocking.new sexp: parse(raw_js), stdout: stdout
-  rescue RKelly::SyntaxError => err
-    raise JsSimulatedBlocking::SyntaxError, err.message
-  end
-
-  private
-
-  def self.parse(raw_js)
-    parser = RKelly::Parser.new
-    # RKelly raises for some errors, and for others just returns nil
-    ast = parser.parse(raw_js) or
-      raise RKelly::SyntaxError, "parser did not return an ast"
-    AstToSexp.new.accept(ast)
-  end
-
-  public
-
-
   attr_accessor :stdout, :result, :callstack
 
   def initialize(sexp:, stdout:)

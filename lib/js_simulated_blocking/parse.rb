@@ -1,6 +1,24 @@
+require 'js_simulated_blocking/errors'
+
 # Reference: https://github.com/nene/rkelly-remix/blob/5034089bc821d61dbcb3472894177a293f1755a8/lib/rkelly/visitors/visitor.rb
 class JsSimulatedBlocking
-  class AstToSexp
+  class Parse
+    def self.string(raw_js, **initialization_attrs)
+      sexp = string_to_sexp raw_js
+      JsSimulatedBlocking.new sexp: sexp, **initialization_attrs
+    rescue RKelly::SyntaxError => err
+      raise JsSimulatedBlocking::SyntaxError, err.message
+    end
+
+    def self.string_to_sexp(raw_js)
+      if ast=RKelly::Parser.new.parse(raw_js)
+        new.accept(ast)
+      else
+        # RKelly raises for some errors, and for others just returns nil
+        raise RKelly::SyntaxError, "parser did not return an ast"
+      end
+    end
+
     def accept(target)
       target.accept(self)
     end

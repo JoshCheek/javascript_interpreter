@@ -31,7 +31,7 @@ class JsSimulatedBlocking
         raise InvalidInvocation.new(program_name, "No such file: #{filename.inspect}")
 
       javascript = File.read(filename)
-      JsSimulatedBlocking.from_string(javascript, stdout: stdout).call
+      JsSimulatedBlocking::Parse.string(javascript, stdout: stdout).call
       return 0
 
     rescue JsSimulatedBlocking::Error => err
