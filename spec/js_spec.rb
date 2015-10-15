@@ -6,16 +6,17 @@ RSpec.describe 'The JS interpreter' do
     assertions.each do |type, expectation|
       case type
       when :result then expect(interpreter.result).to eq expectation
+      when :locals then expect(interpreter.callstack[-1]).to eq expectation
       else raise "You need to define the assertion for #{type.inspect}"
       end
     end
     interpreter
   end
 
-  it 'can set and lookup local variables', t: true do
-    interprets! 'var a = 1; var b = 2; a',
+  it 'can set and lookup local variables', passing: true do
+    interprets! 'var a = 1, b = 2; a+b',
                 locals: {a: 1, b: 2},
-                result: 2
+                result: 3
   end
 
   describe 'function instantiation' do

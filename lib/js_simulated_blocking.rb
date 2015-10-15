@@ -9,31 +9,36 @@ class AstVisitor < RKelly::Visitors::Visitor
   #   FUNC_CALL_NODES + FUNC_DECL_NODES
 
   # list of nodes I've looked at and like how they work
-  OK_NODES          = %w[ExpressionStatement]
-  REWRITTEN_NODES   = %w[Add True False Null Number SourceElements]
-  UNEVALUATED_NODES = ALL_NODES - OK_NODES
-
-  UNEVALUATED_NODES.each do |type|
+  ALL_NODES.each do |type|
     define_method "visit_#{type}Node" do |node|
-      inspected = {type: type, node: node}.inspect
+      inspected = {type: type, node: node.to_sexp}.inspect
       raise inspected
     end
   end
+
+  def visit_VarStatementNode(node)
+    declarations = node.value.map do |decl|
+      decl.constant? and raise "Haven't checked this out yet: #{decl.to_sexp.inspect}"
+      sexp       = [decl.name.to_s.intern]
+      assignment = decl.value
+      sexp << assignment.value.accept(self) if assignment
+      sexp
+    end
+    [:vars, *declarations]
+  end
+
+  def visit_ExpressionStatementNode(*) super end
 
   def visit_TrueNode(*)  [:true]  end
   def visit_FalseNode(*) [:false] end
   def visit_NullNode(*)  [:null]  end
 
-  def visit_SourceElementsNode(*) [:elements, *super] end
   def visit_AddNode(o)            [:add,      *super] end
+  def visit_SourceElementsNode(*) [:elements, *super] end
 
-  def visit_StringNode(node) [:string, node.value[1...-1]] end # shitty escaping >.<
-  def visit_NumberNode(node) [:number, node.value.to_f]    end
-
-  meths = instance_methods
-  REWRITTEN_NODES.each do |type|
-    meths.include?(:"visit_#{type}Node") || raise("NOT REWRITTEN: #{type.inspect}")
-  end
+  def visit_StringNode(node)  [:string, node.value[1...-1]] end # shitty escaping >.<
+  def visit_NumberNode(node)  [:number, node.value.to_f]    end
+  def visit_ResolveNode(node) [:resolve, node.value.intern] end
 end
 
 
@@ -49,13 +54,12 @@ class JsSimulatedBlocking
     raise JsSimulatedBlocking::SyntaxError, err.message
   end
 
-
   attr_accessor :ast, :stdout, :result, :callstack
 
   def initialize(ast:, stdout:)
     self.ast       = ast
     self.stdout    = stdout
-    self.callstack = []
+    self.callstack = [{}]
     self.result    = nil
   end
 
@@ -76,13 +80,16 @@ class JsSimulatedBlocking
 
     type, *rest = sexp
     case type
-    when :elements then rest.inject(nil) { |_, child| interpret_sexp child }
     when :true     then true
     when :false    then false
     when :null     then nil
     when :add      then rest.map { |child| interpret_sexp child }.inject(:+)
-    when :number, :string  then rest.first
-    # when :expression then rest.inject(nil) { |_, child| interpret_sexp child }
+    when :vars     then rest.each { |name, value| callstack.last[name] = interpret_sexp value }
+    when :elements then rest.inject(nil) { |_, child| interpret_sexp child }
+    when :number, :string then rest.first
+    when :resolve  then
+      var_name = rest.first
+      callstack.last[var_name]
     else
       print "\e[41;37m#{{type: type, rest: rest}.inspect}\e[0m\n"
       require "pry"
