@@ -2,6 +2,7 @@ require 'rkelly'
 require 'js_simulated_blocking/errors'
 
 # Subclasses this https://github.com/nene/rkelly-remix/blob/5034089bc821d61dbcb3472894177a293f1755a8/lib/rkelly/visitors/visitor.rb
+# TODO: Rename to AstToSexp
 class AstVisitor < RKelly::Visitors::Visitor
   # ALL_NODES = %w{ For ForIn Try BracketAccessor DotAccessor } +
   #   TERMINAL_NODES + SINGLE_VALUE_NODES + BINARY_NODES + ARRAY_VALUE_NODES +
@@ -47,10 +48,76 @@ class AstVisitor < RKelly::Visitors::Visitor
   def visit_NumberNode(node)  [:number,  node.value.to_f]    end
   def visit_ResolveNode(node) [:resolve, node.value.intern]  end
 
+  def visit_ParentheticalNode(*)       super end
   def visit_ExpressionStatementNode(*) super end
+
   def visit_ReturnNode(*)         [:return,    super] end
   def visit_AddNode(o)            [:add,      *super] end
   def visit_SourceElementsNode(*) [:elements, *super] end
+end
+
+
+class StackFrame
+  attr_accessor :return_here, :sexp, :next_expr, :locals
+  def initialize(return_here:, sexp:, next_expr:, locals:)
+    self.sexp        = sexp
+    self.locals      = locals
+    self.next_expr   = next_expr
+    self.return_here = return_here
+  end
+
+  def declare(vars)
+    vars.each { |name, value| locals[name] = value }
+  end
+
+  def resolve(varname)
+    locals.fetch(varname)
+  end
+
+  def all_locals
+    return_here.all_locals.merge locals
+  end
+end
+
+
+class NullStackFrame
+  def all_locals
+    {}
+  end
+end
+
+
+class Callstack
+  attr_accessor :head
+
+  def initialize
+    self.head = NullStackFrame.new
+  end
+
+  def push(sexp:, next_expr: 0, locals: {})
+    self.head = StackFrame.new(
+      sexp:        sexp,
+      locals:      locals,
+      next_expr:   next_expr,
+      return_here: head,
+    )
+  end
+
+  def pop
+    self.head = self.head.return_here
+  end
+
+  def declare(vars)
+    head.declare vars
+  end
+
+  def resolve(varname)
+    head.resolve varname
+  end
+
+  def all_locals
+    head.all_locals
+  end
 end
 
 
@@ -66,13 +133,15 @@ class JsSimulatedBlocking
     raise JsSimulatedBlocking::SyntaxError, err.message
   end
 
+
   attr_accessor :ast, :stdout, :result, :callstack
 
   def initialize(ast:, stdout:)
     self.ast       = ast
     self.stdout    = stdout
-    self.callstack = [{}]
     self.result    = nil
+    self.callstack = Callstack.new
+    callstack.push sexp: AstVisitor.new.accept(ast)
   end
 
   def call
@@ -96,12 +165,12 @@ class JsSimulatedBlocking
     when :false    then false
     when :null     then nil
     when :add      then rest.map { |child| interpret_sexp child }.inject(:+)
-    when :vars     then rest.each { |name, value| callstack.last[name] = interpret_sexp value }
+    when :vars     then
+      vars = rest.map { |name, value| [name, interpret_sexp(value)] }.to_h
+      callstack.declare vars
     when :elements then rest.inject(nil) { |_, child| interpret_sexp child }
     when :number, :string then rest.first
-    when :resolve  then
-      var_name = rest.first
-      callstack.last[var_name]
+    when :resolve  then callstack.resolve(rest.first)
     when :function then
       arguments, body = rest
       {type: :sexp, arguments: arguments, body: body}
@@ -111,9 +180,10 @@ class JsSimulatedBlocking
       arguments = argument_sexps.map { |arg| interpret_sexp arg }
       locals    = function[:arguments].zip(arguments).to_h
 
-      callstack.push(locals)
       return_value = case function.fetch(:type)
-      when :sexp then interpret_sexp function.fetch(:body)
+      when :sexp then
+        callstack.push(sexp: function.fetch(:body), locals: locals)
+        interpret_sexp function.fetch(:body)
       else raise "WHAT IS THIS?: #{function.fetch(:type).inspect}"
       end
       callstack.pop

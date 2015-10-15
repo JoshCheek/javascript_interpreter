@@ -6,12 +6,15 @@ RSpec.describe 'The JS interpreter' do
     assertions.each do |type, expectation|
       case type
       when :result then expect(interpreter.result).to eq expectation
-      when :locals then expect(interpreter.callstack[-1]).to eq expectation
+      when :locals then expect(interpreter.callstack.all_locals).to eq expectation
       else raise "You need to define the assertion for #{type.inspect}"
       end
     end
     interpreter
   end
+
+  # uhm... I'm actually not sure if this is what parens do
+  it 'can turn statements into expressions with parentheses'
 
   it 'can set and lookup local variables', passing: true do
     interprets! 'var a = 1, b = 2; a+b',
@@ -35,6 +38,10 @@ RSpec.describe 'The JS interpreter' do
 
     it 'passes the arguments to the function', passing: true do
       interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
+    end
+
+    it 'can return early from the function', current: true do
+      interprets! '(function() { return 1; return 2; })(10000)', result: 1
     end
 
     it 'can see variables from the enclosing environment' do
