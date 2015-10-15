@@ -1,27 +1,10 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
-require 'js_simulated_blocking'
+require 'js_simulated_blocking/binary'
 
-filename, *unexpected_args = ARGV
-
-error_message = if unexpected_args.any?
-  "Should only be one argument, you gave #{ARGV.length}, #{ARGV.inspect}"
-elsif !filename
-  "Please provide a filename"
-elsif !File.exist?(filename)
-  "No such file: #{filename.inspect}"
-end
-
-if error_message
-  $stderr.puts "Usage: #$0 JSFILE\n#{error_message}"
-  exit 1
-end
-
-js = File.read(filename)
-
-begin
-  JsSimulatedBlocking.from_string(js, stdout: $stdout).call
-rescue JsSimulatedBlocking::SyntaxError => err
-  $stderr.puts "Syntax error (#{err.message})"
-  exit 1
-end
+exit JsSimulatedBlocking::Binary.call(
+  program_name: $0,
+  argv:         ARGV,
+  stderr:       $stderr,
+  stdout:       $stdout,
+)

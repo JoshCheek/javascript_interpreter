@@ -1,8 +1,7 @@
 require 'rkelly'
+require 'js_simulated_blocking/syntax_error'
 
 class JsSimulatedBlocking
-  SyntaxError = Class.new SyntaxError
-
   def self.from_string(raw_js, stdout:)
     parser = RKelly::Parser.new
     ast    = parser.parse(raw_js)
