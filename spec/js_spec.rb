@@ -12,7 +12,7 @@ RSpec.describe 'The JS interpreter' do
     assertions.each do |type, expectation|
       case type
       when :result then expect(interpreter.result).to eq expectation
-      when :locals then expect(interpreter.callstack.all_locals).to eq expectation
+      when :locals then expect(interpreter.env.all_visible).to eq expectation
       else raise "You need to define the assertion for #{type.inspect}"
       end
     end
@@ -38,7 +38,7 @@ RSpec.describe 'The JS interpreter' do
   end
 
   describe 'method invocation' do
-    it 'evaluates to the return value when called', passing: true do
+    it 'evaluates to the return value when called', t:true, passing: true do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
 

@@ -1,74 +1,146 @@
 require 'rkelly'
 require 'js_simulated_blocking/parse'
-require 'js_simulated_blocking/callstack'
 
 
 class JsSimulatedBlocking
-  attr_accessor :stdout, :result, :callstack
+  class Function
+    attr_accessor :env, :beginning, :ending
+    def initialize(env:, beginning:, ending:)
+      self.env, self.beginning, self.ending = env, beginning, ending
+    end
+  end
 
+  class Env
+    NULL = Module.new
+    NULL.extend NULL
+
+    attr_accessor :parent, :locals
+    def NULL.parent() self end
+    def NULL.locals() {}   end
+
+    def initialize(locals: {}, parent: NULL)
+      self.parent, self.locals = parent, locals
+    end
+
+    def resolve(name)
+      locals.fetch name
+    end
+    def NULL.resolve(name)
+      raise "No variable named: #{name.inspect}"
+    end
+
+    def declare(name, value)
+      locals[name] = value
+    end
+    def NULL.declare(name, value)
+      raise "Cannot declare variables to the null env! #{{name: name, value: value}.inspect}"
+    end
+
+    def all_visible
+      parent.all_visible.merge locals
+    end
+    def NULL.all_visible
+      locals
+    end
+  end
+end
+
+
+class JsSimulatedBlocking
+  attr_accessor :stdout, :stack, :instructions, :env
+  attr_accessor :result
+
+  # TODO: rename sexp -> instructions
   def initialize(sexp:, stdout:)
-    self.stdout    = stdout
-    self.result    = nil
-    self.callstack = Callstack.new
-    callstack.push sexp: sexp
+    self.instructions = sexp
+    self.stdout       = stdout
+    self.result       = nil
+    self.stack        = []
+    self.env          = Env.new
   end
 
   def call
-    # until callstack.finished?
-    #   callstack.advance(self)
-    # end
-    sexp = callstack.head.sexp
-
-    # require 'pp'; pp sexp
-    self.result = interpret_expr sexp
+    self.result = interpret_exprs instructions
     self
   end
 
   private
 
-  def interpret_expr(expr)
-    unless expr.first.kind_of? Symbol
-      require "pry"
-      binding.pry
-    end
+  def interpret_exprs(exprs)
+    env                = self.env
+    current_offset     = 0
+    function_locations = []
+    current_result     = :no_result_was_set
 
-    type, *rest = expr
-    case type
-    when :true     then true
-    when :false    then false
-    when :null     then nil
-    when :add      then rest.map { |child| interpret_expr child }.inject(:+)
-    when :vars     then
-      vars = rest.map { |name, value| [name, interpret_expr(value)] }.to_h
-      callstack.declare vars
-    when :elements then rest.inject(nil) { |_, child| interpret_expr child }
-    when :number, :string then rest.first
-    when :resolve  then callstack.resolve(rest.first)
-    when :function then
-      arguments, body = rest
-      {type: :sexp, arguments: arguments, body: body}
-    when :function_call then
-      receiver_sexp, argument_sexps = rest
-      function  = interpret_expr(receiver_sexp)
-      arguments = argument_sexps.map { |arg| interpret_expr arg }
-      locals    = function[:arguments].zip(arguments).to_h
-
-      return_value = case function.fetch(:type)
-      when :sexp then
-        callstack.push(sexp: function.fetch(:body), locals: locals)
-        interpret_expr function.fetch(:body)
-      else raise "WHAT IS THIS?: #{function.fetch(:type).inspect}"
+    puts "-----  BEGIN  -----"
+    while expr = exprs[current_offset]
+      instruction, *args = expr
+      p offset: current_offset, instruction: expr
+      current_result = case instruction
+      when :push
+        stack.push args.first
+      when :resolve
+        name  = stack.pop
+        value = env.resolve name
+        stack.push value
+      when :declare_var
+        name  = stack.pop
+        value = stack.pop
+        env.declare name, value
+      when :pop
+        stack.pop
+      when :add
+        right = stack.pop
+        left  = stack.pop
+        added = left + right
+        stack.push added
+        added
+      when :begin_function
+        ending_offset    = args.first
+        beginning_offset = current_offset
+        current_offset   = ending_offset
+        stack.push Function.new(
+          env:       env,
+          beginning: beginning_offset,
+          ending:    ending_offset,
+        )
+      when :push_location
+        stack.push current_offset
+      when :push_env
+        stack.push env
+      when :pop_env
+        env = stack.pop
+      when :swap_top
+        first  = stack.pop
+        second = stack.pop
+        stack.push first
+        stack.push second
+      when :push_array
+        require "pry"
+        binding.pry
+        element = stack.pop
+        array   = stack.last
+        array.push element
+        require "pry"
+        binding.pry
+      when :invoke
+        args = stack.pop
+        if args.any?
+          require "pry"
+          binding.pry
+        end
+        function       = stack.pop
+        env            = Env.new locals: {}, parent: function.env
+        current_offset = function.beginning
+      when :return
+        current_offset = stack.pop
+      else
+        print "\e[41;37m#{{instruction: instruction, args: args}.inspect}\e[0m\n"
+        require "pry"
+        binding.pry
       end
-      callstack.pop
-      return_value
-
-    when :return
-      interpret_expr rest.first
-
-    else
-      print "\e[41;37m#{{type: type, rest: rest}.inspect}\e[0m\n"
-      require "pry"
-      binding.pry
+      current_offset += 1
     end
+    current_result
   end
 end
