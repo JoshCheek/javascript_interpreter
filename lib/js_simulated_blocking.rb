@@ -1,52 +1,11 @@
 require 'rkelly'
+require 'js_simulated_blocking/env'
 require 'js_simulated_blocking/parse'
 
 
 class JsSimulatedBlocking
-  class Function
-    attr_accessor :env, :beginning, :ending
-    def initialize(env:, beginning:, ending:)
-      self.env, self.beginning, self.ending = env, beginning, ending
-    end
-  end
+  Function = Struct.new :env, :beginning, :ending
 
-  class Env
-    NULL = Module.new
-    NULL.extend NULL
-
-    attr_accessor :parent, :locals
-    def NULL.parent() self end
-    def NULL.locals() {}   end
-
-    def initialize(locals: {}, parent: NULL)
-      self.parent, self.locals = parent, locals
-    end
-
-    def resolve(name)
-      locals.fetch(name) { parent.resolve name }
-    end
-    def NULL.resolve(name)
-      raise "No variable named: #{name.inspect}"
-    end
-
-    def declare(name, value)
-      locals[name] = value
-    end
-    def NULL.declare(name, value)
-      raise "Cannot declare variables to the null env! #{{name: name, value: value}.inspect}"
-    end
-
-    def all_visible
-      parent.all_visible.merge locals
-    end
-    def NULL.all_visible
-      locals
-    end
-  end
-end
-
-
-class JsSimulatedBlocking
   attr_accessor :stdout, :stack, :instructions, :env
 
   # TODO: rename sexp -> instructions
@@ -105,11 +64,8 @@ class JsSimulatedBlocking
         ending_offset    = args.first
         beginning_offset = current_offset
         current_offset   = ending_offset
-        stack.push Function.new(
-          env:       env,
-          beginning: beginning_offset,
-          ending:    ending_offset,
-        )
+        function         = Function.new(env, beginning_offset, ending_offset)
+        stack.push(function)
       when :push_location
         stack.push current_offset
       when :push_env
