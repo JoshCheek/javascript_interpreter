@@ -5,20 +5,15 @@ require 'js_simulated_blocking/instructions'
 # Reference: https://github.com/nene/rkelly-remix/blob/5034089bc821d61dbcb3472894177a293f1755a8/lib/rkelly/visitors/visitor.rb
 class JsSimulatedBlocking
   class Parse
-    def self.string(raw_js, **initialization_attrs)
-      instructions = string_to_instructions raw_js
-      JsSimulatedBlocking.new instructions: instructions, **initialization_attrs
-    rescue RKelly::SyntaxError => err
-      raise JsSimulatedBlocking::SyntaxError, err.message
-    end
-
-    def self.string_to_instructions(raw_js)
+    def self.string(raw_js)
       if ast=RKelly::Parser.new.parse(raw_js)
         new(Instructions.new, ast).call.instructions.to_a
       else
         # RKelly raises for some errors, and for others just returns nil
         raise RKelly::SyntaxError, "parser did not return an ast"
       end
+    rescue RKelly::SyntaxError => err
+      raise JsSimulatedBlocking::SyntaxError, err.message
     end
 
     attr_accessor :instructions, :ast
