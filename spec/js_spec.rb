@@ -38,7 +38,7 @@ RSpec.describe 'The JS interpreter' do
   end
 
   describe 'method invocation' do
-    it 'evaluates to the return value when called', t:true, passing: true do
+    it 'evaluates to the return value when called', passing: true do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
 
@@ -46,7 +46,7 @@ RSpec.describe 'The JS interpreter' do
       interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
     end
 
-    it 'can return early from the function', not_implemented: true do
+    it 'can return early from the function', passing: true do
       interprets! '(function() { return 1; return 2; })(10000)', result: 1
     end
 
