@@ -18,4 +18,10 @@ if error_message
 end
 
 js = File.read(filename)
-JsSimulatedBlocking.from_string(js, stdout: $stdout).call
+
+begin
+  JsSimulatedBlocking.from_string(js, stdout: $stdout).call
+rescue JsSimulatedBlocking::SyntaxError => err
+  $stderr.puts "Syntax error (#{err.message})"
+  exit 1
+end
