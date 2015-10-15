@@ -1,3 +1,5 @@
+require 'js_simulated_blocking'
+
 RSpec.describe 'The JS interpreter' do
   it 'can set and lookup local variables' do
     interprets! 'var a = 1; var b = 2; a',
@@ -32,10 +34,24 @@ RSpec.describe 'The JS interpreter' do
     end
   end
 
+  def interprets!(code, assertions={})
+    interpreter = JsSimulatedBlocking.from_string(code, stdout: StringIO.new)
+    interpreter.call
+    assertions.each do |type, expectation|
+      case type
+      when :result then expect(interpreter.result).to eq expectation
+      else raise "You need to define the assertion for #{type.inspect}"
+      end
+    end
+    interpreter
+  end
+
   describe 'core libs' do
     describe 'numbers' do
       it 'evaluates to a floating point number of the same value' do
-        interprets! '1', result: 1
+        interpreter = interprets! '1'
+        expect(interpreter.result).to eq 1.0
+        expect(interpreter.result.class).to eq Float
       end
 
       specify '#+ adds numbers together' do
