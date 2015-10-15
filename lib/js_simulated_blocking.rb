@@ -29,7 +29,8 @@ class AstVisitor < RKelly::Visitors::Visitor
 
   def visit_FunctionExprNode(node)
     body = node.function_body.value.accept(self)
-    [:function, node.arguments, body]
+    args = node.arguments.map(&:value).map(&:intern)
+    [:function, args, body]
   end
 
   def visit_FunctionCallNode(node)
@@ -38,19 +39,18 @@ class AstVisitor < RKelly::Visitors::Visitor
     [:function_call, receiver, arguments]
   end
 
-  def visit_ReturnNode(*)              super end
-  def visit_ExpressionStatementNode(*) super end
-
   def visit_TrueNode(*)  [:true]  end
   def visit_FalseNode(*) [:false] end
   def visit_NullNode(*)  [:null]  end
 
+  def visit_StringNode(node)  [:string,  node.value[1...-1]] end # shitty escaping >.<
+  def visit_NumberNode(node)  [:number,  node.value.to_f]    end
+  def visit_ResolveNode(node) [:resolve, node.value.intern]  end
+
+  def visit_ExpressionStatementNode(*) super end
+  def visit_ReturnNode(*)         [:return,    super] end
   def visit_AddNode(o)            [:add,      *super] end
   def visit_SourceElementsNode(*) [:elements, *super] end
-
-  def visit_StringNode(node)  [:string, node.value[1...-1]] end # shitty escaping >.<
-  def visit_NumberNode(node)  [:number, node.value.to_f]    end
-  def visit_ResolveNode(node) [:resolve, node.value.intern] end
 end
 
 
@@ -106,9 +106,10 @@ class JsSimulatedBlocking
       arguments, body = rest
       {type: :sexp, arguments: arguments, body: body}
     when :function_call then
-      receiver, arguments = rest
-      function            = interpret_sexp(receiver)
-      locals              = function[:arguments].zip(arguments).to_h
+      receiver_sexp, argument_sexps = rest
+      function  = interpret_sexp(receiver_sexp)
+      arguments = argument_sexps.map { |arg| interpret_sexp arg }
+      locals    = function[:arguments].zip(arguments).to_h
 
       callstack.push(locals)
       return_value = case function.fetch(:type)
@@ -117,6 +118,9 @@ class JsSimulatedBlocking
       end
       callstack.pop
       return_value
+
+    when :return
+      interpret_sexp rest.first
 
     else
       print "\e[41;37m#{{type: type, rest: rest}.inspect}\e[0m\n"

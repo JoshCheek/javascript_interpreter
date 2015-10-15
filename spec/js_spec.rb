@@ -33,7 +33,7 @@ RSpec.describe 'The JS interpreter' do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
 
-    it 'passes the arguments to the function' do
+    it 'passes the arguments to the function', passing: true do
       interprets! 'var fn = function(n) { return n + n }; fn(1)', result: 2
     end
 
