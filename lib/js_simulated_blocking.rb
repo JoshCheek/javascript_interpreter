@@ -1,20 +1,19 @@
 require 'rkelly'
 require 'js_simulated_blocking/errors'
 
-# Subclasses this https://github.com/nene/rkelly-remix/blob/5034089bc821d61dbcb3472894177a293f1755a8/lib/rkelly/visitors/visitor.rb
-# TODO: Rename to AstToSexp
-class AstVisitor < RKelly::Visitors::Visitor
-  # ALL_NODES = %w{ For ForIn Try BracketAccessor DotAccessor } +
-  #   TERMINAL_NODES + SINGLE_VALUE_NODES + BINARY_NODES + ARRAY_VALUE_NODES +
-  #   NAME_VALUE_NODES + PREFIX_POSTFIX_NODES + CONDITIONAL_NODES +
-  #   FUNC_CALL_NODES + FUNC_DECL_NODES
+# Reference: https://github.com/nene/rkelly-remix/blob/5034089bc821d61dbcb3472894177a293f1755a8/lib/rkelly/visitors/visitor.rb
+class AstToSexp
+  def accept(target)
+    target.accept(self)
+  end
 
-  # list of nodes I've looked at and like how they work
-  ALL_NODES.each do |type|
-    define_method "visit_#{type}Node" do |node|
-      inspected = {type: type, node: node.to_sexp}.inspect
-      raise inspected
-    end
+  def visit_SourceElementsNode(node)
+    elements = node.value.map { |value| value.accept self }
+    [:elements, *elements]
+  end
+
+  def visit_AddNode(node)
+    [:add, node.left.accept(self), node.value.accept(self)]
   end
 
   def visit_VarStatementNode(node)
@@ -44,16 +43,13 @@ class AstVisitor < RKelly::Visitors::Visitor
   def visit_FalseNode(*) [:false] end
   def visit_NullNode(*)  [:null]  end
 
-  def visit_StringNode(node)  [:string,  node.value[1...-1]] end # shitty escaping >.<
-  def visit_NumberNode(node)  [:number,  node.value.to_f]    end
-  def visit_ResolveNode(node) [:resolve, node.value.intern]  end
+  def visit_StringNode(node)  [:string,  node.value[1...-1]]      end # shitty escaping >.<
+  def visit_NumberNode(node)  [:number,  node.value.to_f]         end
+  def visit_ResolveNode(node) [:resolve, node.value.intern]       end
+  def visit_ReturnNode(node)  [:return,  node.value.accept(self)] end
 
-  def visit_ParentheticalNode(*)       super end
-  def visit_ExpressionStatementNode(*) super end
-
-  def visit_ReturnNode(*)         [:return,    super] end
-  def visit_AddNode(o)            [:add,      *super] end
-  def visit_SourceElementsNode(*) [:elements, *super] end
+  def visit_ParentheticalNode(node)       node.value.accept self  end
+  def visit_ExpressionStatementNode(node) node.value.accept self  end
 end
 
 
@@ -141,11 +137,11 @@ class JsSimulatedBlocking
     self.stdout    = stdout
     self.result    = nil
     self.callstack = Callstack.new
-    callstack.push sexp: AstVisitor.new.accept(ast)
+    callstack.push sexp: AstToSexp.new.accept(ast)
   end
 
   def call
-    sexp = AstVisitor.new.accept(ast)
+    sexp = AstToSexp.new.accept(ast)
     # require 'pp'; pp sexp
     self.result = interpret_sexp sexp
     self
