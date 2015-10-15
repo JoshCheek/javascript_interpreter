@@ -42,10 +42,9 @@ RSpec.describe 'Acceptance' do
   end
 
   it 'explodes helpfully when the syntax is not valid js' do
-    skip "Not far enough along yet for syntax"
     stdout, stderr, status = Open3.capture3(bin_path, fixture_invalid_syntax)
     expect(stdout).to be_empty
-    expect(stderr).to match /syntax/
+    expect(stderr).to match /syntax/i
     expect(status).to_not be_success
   end
 end
