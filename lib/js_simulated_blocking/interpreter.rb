@@ -1,11 +1,5 @@
 require 'js_simulated_blocking/functions'
 
-# TODO
-# rename begin_function -> function_begin
-#        end_function   -> function_end
-#        invoke         -> function_call
-#
-# consolidate interpret_exprs into call
 class JsSimulatedBlocking
   class Interpreter
     attr_accessor :stack, :instructions, :env
@@ -16,26 +10,19 @@ class JsSimulatedBlocking
       self.stack        = []
     end
 
-    def call
-      interpret_exprs instructions
-      self
-    end
-
     def result
       stack.last
     end
 
-    private
-
-    def interpret_exprs(exprs)
+    def call
       env                = self.env
       current_offset     = 0
       function_locations = []
 
       # puts "-----  BEGIN  -----"
-      while expr = exprs[current_offset]
-        instruction, *args = expr
-        # p offset: current_offset, instruction: expr
+      while instruction = instructions[current_offset]
+        instruction, *args = instruction
+        # p offset: current_offset, instruction: instruction
         case instruction
         when :push
           stack.push args.first
@@ -59,7 +46,7 @@ class JsSimulatedBlocking
           added = left + right
           stack.push added
           added
-        when :begin_function
+        when :function_begin
           ending_offset    = args.first
           beginning_offset = current_offset
           current_offset   = ending_offset
@@ -80,16 +67,16 @@ class JsSimulatedBlocking
           element = stack.pop
           array   = stack.last
           array.push element
-        when :invoke
+        when :function_invoke
           function       = stack.pop
           env            = Env.new locals: {}, parent: function.env
           current_offset = function.beginning
           stack.push function if function.internal?
-        when :invoke_internal
+        when :function_internal
           function = stack.pop
           args     = stack.pop
           function.call(args)
-        when :return, :end_function
+        when :return, :function_end
           current_offset = stack.pop
         when :dot_access
           name   = stack.pop
@@ -103,6 +90,8 @@ class JsSimulatedBlocking
         end
         current_offset += 1
       end
+      self
     end
+
   end
 end

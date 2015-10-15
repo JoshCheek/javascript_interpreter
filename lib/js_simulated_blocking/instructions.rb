@@ -21,14 +21,14 @@ class JsSimulatedBlocking
         error_info = {next_offset: next_offset, expected: InternalFunction::BEGINNING}
         raise error_info.inspect
       end
-      begin_function InternalFunction::BEGINNING
-      invoke_internal
+      function_begin InternalFunction::BEGINNING
+      function_internal
 
       if next_offset != InternalFunction::ENDING
         error_info = {next_offset: next_offset, expected: InternalFunction::ENDING}
         raise error_info.inspect
       end
-      end_function InternalFunction::BEGINNING
+      function_end InternalFunction::BEGINNING
     end
 
     def self.instruction(name, &body)
@@ -46,29 +46,29 @@ class JsSimulatedBlocking
       instructions.length
     end
 
-    instruction(:push)            { |obj| [:push, obj] }
-    instruction(:push_location)   { [:push_location] }
-    instruction(:push_array)      { [:push_array] }
-    instruction(:push_env)        { [:push_env] }
-    instruction(:pop_env)         { [:pop_env] }
-    instruction(:declare_var)     { [:declare_var] }
-    instruction(:declare_arg)     { [:declare_arg] }
-    instruction(:pop)             { [:pop] }
-    instruction(:add)             { [:add] }
-    instruction(:return)          { [:return] }
-    instruction(:resolve)         { [:resolve] }
-    instruction(:swap_top)        { [:swap_top] }
-    instruction(:dot_access)      { [:dot_access] }
-    instruction(:invoke)          { [:invoke] }
-    instruction(:invoke_internal) { [:invoke_internal] }
+    instruction(:push)              { |obj| [:push, obj] }
+    instruction(:push_location)     { [:push_location] }
+    instruction(:push_array)        { [:push_array] }
+    instruction(:push_env)          { [:push_env] }
+    instruction(:pop_env)           { [:pop_env] }
+    instruction(:declare_var)       { [:declare_var] }
+    instruction(:declare_arg)       { [:declare_arg] }
+    instruction(:pop)               { [:pop] }
+    instruction(:add)               { [:add] }
+    instruction(:return)            { [:return] }
+    instruction(:resolve)           { [:resolve] }
+    instruction(:swap_top)          { [:swap_top] }
+    instruction(:dot_access)        { [:dot_access] }
+    instruction(:function_invoke)   { [:function_invoke] }
+    instruction(:function_internal) { [:function_internal] }
 
-    instruction :begin_function do |end_ofset|
-      [:begin_function, end_ofset]
+    instruction :function_begin do |end_ofset|
+      [:function_begin, end_ofset]
     end
 
-    instruction :end_function do |beginning_offset|
+    instruction :function_end do |beginning_offset|
       instructions[beginning_offset][-1] = next_offset
-      [:end_function]
+      [:function_end]
     end
   end
 end

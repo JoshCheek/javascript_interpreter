@@ -60,14 +60,14 @@ class JsSimulatedBlocking
 
     def visit_FunctionExprNode(node)
       begin_offset = instructions.next_offset
-      instructions.begin_function -1
+      instructions.function_begin -1
       node.arguments.each do |arg|
         instructions.push arg.value.intern
         instructions.declare_arg
       end
       instructions.pop # args that are no longer being used
       accept node.function_body.value
-      instructions.end_function begin_offset
+      instructions.function_end begin_offset
     end
 
     def visit_FunctionCallNode(node)
@@ -92,7 +92,7 @@ class JsSimulatedBlocking
       instructions.swap_top
 
       # invoke the function
-      instructions.invoke
+      instructions.function_invoke
 
       # update the return location
       instructions.instructions[retloc_index][-1] = instructions.current_offset
