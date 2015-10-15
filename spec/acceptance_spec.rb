@@ -12,7 +12,7 @@ fixture_invalid_syntax                    = from_root 'examples/invalid.js'
 
 RSpec.describe 'Acceptance' do
   it 'can run an example program that illustrates the simulated blocking' do
-    skip 'Haven\'t gotten around to making it work yet ;)'
+    pending 'Haven\'t gotten around to making it work yet ;)'
     stdout, stderr, status = Open3.capture3(bin_path, fixture_illustrates_simulated_nonblocking)
     expect(stderr).to be_empty
     expect(status).to be_success

@@ -32,6 +32,7 @@ class JsSimulatedBlocking
 
       javascript = File.read(filename)
       JsSimulatedBlocking.from_string(javascript, stdout: stdout).call
+      return 0
 
     rescue JsSimulatedBlocking::Error => err
       stderr.puts err.message

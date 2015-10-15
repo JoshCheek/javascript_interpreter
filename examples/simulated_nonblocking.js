@@ -16,7 +16,7 @@ setTimeout(first, 2000);
 
 // this one saves the current callstack as the callback
 // should print 1 second later, b/c the first setTimeout is async
-setTimeout(null, 1000);
+setTimeout(1000);
 second();
 
 // this one is async b/c it provides a callback
