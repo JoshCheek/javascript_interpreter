@@ -18,15 +18,4 @@ if error_message
 end
 
 js = File.read(filename)
-
-require 'rkelly'
-begin
-  parser = RKelly::Parser.new
-  ast    = parser.parse(js)
-  ast || raise(RKelly::SyntaxError, "parser did not return an ast")
-rescue RKelly::SyntaxError => err
-  $stderr.puts "Syntax error (#{err.message})"
-  exit 1
-end
-JsSimulatedBlocking.new(js, stdout: $stdout).call
-# JsSimulatedBlocking.from_string(js, stdout: $stdout).call
+JsSimulatedBlocking.from_string(js, stdout: $stdout).call
