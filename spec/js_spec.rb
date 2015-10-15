@@ -29,7 +29,7 @@ RSpec.describe 'The JS interpreter' do
   end
 
   describe 'method invocation' do
-    it 'evaluates to the return value when called' do
+    it 'evaluates to the return value when called', passing: true do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
 

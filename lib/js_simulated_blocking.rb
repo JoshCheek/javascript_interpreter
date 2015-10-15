@@ -27,6 +27,18 @@ class AstVisitor < RKelly::Visitors::Visitor
     [:vars, *declarations]
   end
 
+  def visit_FunctionExprNode(node)
+    body = node.function_body.value.accept(self)
+    [:function, node.arguments, body]
+  end
+
+  def visit_FunctionCallNode(node)
+    receiver  = node.value.accept(self)
+    arguments = node.arguments.value.map { |arg| arg.accept self }
+    [:function_call, receiver, arguments]
+  end
+
+  def visit_ReturnNode(*)              super end
   def visit_ExpressionStatementNode(*) super end
 
   def visit_TrueNode(*)  [:true]  end
@@ -90,6 +102,22 @@ class JsSimulatedBlocking
     when :resolve  then
       var_name = rest.first
       callstack.last[var_name]
+    when :function then
+      arguments, body = rest
+      {type: :sexp, arguments: arguments, body: body}
+    when :function_call then
+      receiver, arguments = rest
+      function            = interpret_sexp(receiver)
+      locals              = function[:arguments].zip(arguments).to_h
+
+      callstack.push(locals)
+      return_value = case function.fetch(:type)
+      when :sexp then interpret_sexp function.fetch(:body)
+      else raise "WHAT IS THIS?: #{function.fetch(:type).inspect}"
+      end
+      callstack.pop
+      return_value
+
     else
       print "\e[41;37m#{{type: type, rest: rest}.inspect}\e[0m\n"
       require "pry"
