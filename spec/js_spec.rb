@@ -61,11 +61,25 @@ RSpec.describe 'The JS interpreter' do
                 result: 3
   end
 
-  describe 'function instantiation', not_implemented: true do
+  describe 'function instantiation', t:true do
+    def assert_object(object, assertions)
+        assertions.each do |type, expectation|
+          case type
+          when :constructor
+            expect(object.constructor).to eq expectation
+          when :__proto__
+            expect(object.__proto__).to eq expectation
+          else raise "You need to define the assertion for #{type.inspect}"
+          end
+      end
+    end
+
     it 'makes a new object whose __proto__ is set to the function\'s prototype' do
       interpreter = interprets! 'var klass = function() {}; var instance = new klass()'
       instance    = interpreter.local :instance
       klass       = interpreter.local :klass
+      require "pry"
+      binding.pry
       assert_object instance, constructor: klass, __proto__: klass.prototype
     end
   end

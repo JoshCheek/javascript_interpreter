@@ -97,9 +97,6 @@ class JsSimulatedBlocking
       # update the return location
       instructions.instructions[retloc_index][-1] = instructions.current_offset
 
-      # swap the env and the return value
-      instructions.swap_top
-
       # update the env
       instructions.pop_env
     end
@@ -140,6 +137,37 @@ class JsSimulatedBlocking
       accept node.value
       instructions.push node.accessor.intern
       instructions.dot_access
+    end
+
+    def visit_NewExprNode(node)
+      # push the current environment
+      instructions.push_env
+
+      # placeholder for the return location
+      retloc_index = instructions.next_offset
+      instructions.push :placeholder
+
+      # find the constructor
+      accept node.value
+
+      # push the args into an array
+      instructions.push []
+      node.arguments.value.each do |arg|
+        accept arg              # push the arg
+        instructions.push_array # onto the array
+      end
+
+      # constructor is on the top of the stack
+      instructions.swap_top
+
+      # instantiation
+      instructions.new_object
+
+      # update the return location
+      instructions.instructions[retloc_index][-1] = instructions.current_offset
+
+      # update the env
+      instructions.pop_env
     end
   end
 end

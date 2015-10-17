@@ -29,6 +29,7 @@ class JsSimulatedBlocking
         raise error_info.inspect
       end
       function_end InternalFunction::BEGINNING
+      pop
     end
 
     def self.instruction(name, &body)
@@ -61,6 +62,7 @@ class JsSimulatedBlocking
     instruction(:dot_access)        { [:dot_access] }
     instruction(:function_invoke)   { [:function_invoke] }
     instruction(:function_internal) { [:function_internal] }
+    instruction(:new_object)        { [:new_object] }
 
     instruction :function_begin do |end_ofset|
       [:function_begin, end_ofset]

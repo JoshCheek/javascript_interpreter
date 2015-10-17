@@ -18,6 +18,10 @@ class JsSimulatedBlocking
       parent.all_visible.merge locals
     end
 
+    def new_object(**args)
+      parent.new_object(**args)
+    end
+
     def inspect(internal=false)
       if internal
         "#{locals.keys.inspect} -> #{parent.inspect true}"
@@ -61,6 +65,22 @@ class JsSimulatedBlocking
 
     def declare(name, value)
       raise "Cannot declare variables to the null env! #{name.inspect}, #{value.inspect}"
+    end
+
+    class JsObject
+      attr_accessor :constructor, :__proto__
+      def initialize(constructor: nil, __proto__: nil)
+        self.constructor = constructor
+        self.__proto__   = __proto__
+      end
+    end
+
+    def default_prototype
+      @default_prototype ||= JsObject.new
+    end
+
+    def new_object(**args)
+      JsObject.new **args
     end
 
     def inspect(internal)
