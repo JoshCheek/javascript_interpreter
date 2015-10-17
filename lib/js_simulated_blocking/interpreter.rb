@@ -44,7 +44,7 @@ class JsSimulatedBlocking
         when :declare_var
           name  = stack.pop
           value = stack.pop
-          # guessing I put the objects onto the stack in the wrong order for this one >.<
+          value = value.return_value if value.respond_to? :return_value
           env.declare name, value
         when :declare_arg
           name       = stack.pop
@@ -85,21 +85,24 @@ class JsSimulatedBlocking
           obj    = stack.pop
           method = obj.fetch name
           stack.push method
-        when :new_object
-          constructor = stack.pop
-          obj         = env.new_object constructor: constructor, __proto__: constructor.prototype
-          args        = stack.peek
-          # args.unshift obj # Not tested: unshift vs push
-          stack.push constructor
+        when :new_pre
+          fn_call      = stack.peek
+          fn           = fn_call.function
+          obj          = env.new_object constructor: fn, __proto__: fn.prototype
+          fn_call.this = obj
           env, current_offset = function_invoke
-          stack.push obj
+        when :new_post
+          fn_call = stack.peek
+          fn_call.return_value = fn_call.this
         when :push_fn_call
+          # TODO: move this class to functions.rb
           function_call_class =
             Struct.new :function,
                        :arguments,
                        :return_env,
                        :return_location,
-                       :return_value
+                       :return_value,
+                       :this
           function_call = function_call_class.new
           function_call.arguments = []
           stack.push function_call

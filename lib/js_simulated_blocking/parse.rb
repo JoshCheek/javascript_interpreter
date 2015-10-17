@@ -141,13 +141,10 @@ class JsSimulatedBlocking
         end
 
         instructions.set_return_location do
-          instructions.new_object
+          instructions.new_pre
           instructions.function_invoke
         end
-
-        instructions.copy_this
-        instructions.swap_top
-        instructions.set_retval
+        instructions.new_post
       end
     end
 

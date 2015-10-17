@@ -63,6 +63,7 @@ class JsSimulatedBlocking
     instruction(:pop_fn_call)  { [:pop_fn_call] }
     instruction(:set_retval)   { [:set_retval] }
     instruction(:set_arg)      { |index| [:set_arg, index] }
+    instruction(:copy_this)    { [:copy_this] }
 
     $expected <<
     def set_return_location
@@ -86,7 +87,8 @@ class JsSimulatedBlocking
     instruction(:dot_access)        { [:dot_access] }
     instruction(:function_invoke)   { [:function_invoke] }
     instruction(:function_internal) { [:function_internal] }
-    instruction(:new_object)        { [:new_object] }
+    instruction(:new_pre)           { [:new_pre]  }
+    instruction(:new_post)          { [:new_post] }
 
     instruction :function_begin do |end_ofset|
       [:function_begin, end_ofset]
