@@ -20,6 +20,16 @@ class JsSimulatedBlocking
       parent.all_visible.merge locals
     end
 
+    def new_function(**args, &block)
+      args[:env] ||= self
+      parent.new_function(**args, &block)
+    end
+
+    def new_internal_function(**args, &block)
+      args[:env] ||= self
+      parent.new_internal_function(**args, &block)
+    end
+
     def new_object(**args)
       parent.new_object(**args)
     end
@@ -75,6 +85,16 @@ class JsSimulatedBlocking
 
     def new_object(**args)
       JsObject.new **args
+    end
+
+    def new_internal_function(**args, &block)
+      args[:env] ||= self
+      InternalFunction.new **args, &block
+    end
+
+    def new_function(**args, &block)
+      args[:env] ||= self
+      Function.new **args, &block
     end
 
     def inspect(internal)

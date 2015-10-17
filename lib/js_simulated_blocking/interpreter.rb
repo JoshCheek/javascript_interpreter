@@ -65,7 +65,9 @@ class JsSimulatedBlocking
           beginning_offset = current_offset
           current_offset   = ending_offset
           prototype        = env.new_object
-          function         = Function.new(env, beginning_offset, ending_offset, prototype)
+          function         = env.new_function beginning: beginning_offset,
+                                              ending:    ending_offset,
+                                              prototype: prototype
           stack.push(function)
         when :push_env
           stack.push env

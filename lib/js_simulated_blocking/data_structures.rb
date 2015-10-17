@@ -2,10 +2,10 @@ class JsSimulatedBlocking
   class JsObject
     attr_accessor :constructor, :__proto__, :hash
 
-    def initialize(constructor: nil, __proto__: nil)
+    def initialize(constructor: nil, __proto__: nil, hash: {})
       self.constructor = constructor
       self.__proto__   = __proto__
-      self.hash        = {}
+      self.hash        = hash
     end
 
     def []=(key, value)
@@ -17,7 +17,17 @@ class JsSimulatedBlocking
     end
   end
 
-  Function = Struct.new :env, :beginning, :ending, :prototype do
+  class Function < JsObject
+    attr_accessor :env, :beginning, :ending, :prototype
+
+    def initialize(env:, beginning:, ending:, prototype:, **rest)
+      self.env       = env
+      self.beginning = beginning
+      self.ending    = ending
+      self.prototype = prototype
+      super **rest
+    end
+
     def internal?
       false
     end
@@ -56,11 +66,11 @@ class JsSimulatedBlocking
 
     attr_accessor :name, :block
 
-    def initialize(env:, name: nil, &block)
+    def initialize(name: nil, **rest, &block)
       self.name  = name
       self.block = block
-      prototype = :FIXME_where_to_get_this?
-      super env, BEGINNING, ENDING, prototype
+      rest[:prototype] ||= :FIXME_where_to_get_this?
+      super beginning: BEGINNING, ending: ENDING, **rest
     end
 
     def internal?
