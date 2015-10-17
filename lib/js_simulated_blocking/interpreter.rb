@@ -24,14 +24,14 @@ class JsSimulatedBlocking
       current_offset     = 0
       function_locations = []
 
-      puts "-----  BEGIN  -----"
-      require 'pp'
-      pp stack
+      # puts "-----  BEGIN  -----"
+      # require 'pp'
+      # pp stack
       while instruction = instructions[current_offset]
         instruction, *args = instruction
-        puts "\n-----"
-        pp stack
-        puts "#{current_offset} #{instruction.inspect} #{args.inspect}"
+        # puts "\n-----"
+        # pp stack
+        # puts "#{current_offset} #{instruction.inspect} #{args.inspect}"
         case instruction
         when :push
           to_push = args.first
@@ -47,8 +47,10 @@ class JsSimulatedBlocking
           # guessing I put the objects onto the stack in the wrong order for this one >.<
           env.declare name, value
         when :declare_arg
-          name  = stack.pop
-          value = stack.peek.pop
+          name       = stack.pop
+          fn_call    = stack.peek
+          arg_offset = args[0]
+          value      = fn_call.arguments[arg_offset]
           env.declare name, value
         when :pop
           stack.pop
@@ -85,15 +87,12 @@ class JsSimulatedBlocking
         when :function_invoke
           env, current_offset = function_invoke
         when :function_internal
-          function = stack.pop
-          args     = stack.pop
-          function.call(args)
+          fn_call  = stack.peek
+          function = fn_call.function
+          function.call(fn_call)
         when :return, :function_end
-          current_offset = stack.pop
-          unless current_offset.kind_of? Fixnum
-            require "pry"
-            binding.pry
-          end
+          fn_call        = stack.peek
+          current_offset = fn_call.return_location
         when :dot_access
           name   = stack.pop
           obj    = stack.pop
@@ -107,6 +106,41 @@ class JsSimulatedBlocking
           stack.push constructor
           env, current_offset = function_invoke
           stack.push obj
+        when :push_fn_call
+          function_call_class =
+            Struct.new :function,
+                       :arguments,
+                       :return_env,
+                       :return_location,
+                       :return_value
+          function_call = function_call_class.new
+          function_call.arguments = []
+          stack.push function_call
+        when :pop_fn_call
+          fn_call = stack.pop
+          env     = fn_call.return_env
+          stack.push fn_call.return_value
+        when :set_function
+          fn      = stack.pop
+          fn_call = stack.peek
+          fn_call.function = fn
+        when :set_retenv
+          return_env = stack.pop
+          fn_call    = stack.peek
+          fn_call.return_env = return_env
+        when :set_return_location
+          retloc  = stack.pop
+          fn_call = stack.peek
+          fn_call.return_location = retloc
+        when :set_retval
+          retval  = stack.pop
+          fn_call = stack.peek
+          fn_call.return_value = retval
+        when :set_arg
+          value   = stack.pop
+          fn_call = stack.peek
+          index   = args[0]
+          fn_call.arguments[index] = value
         else
           print "\e[41;37m#{{instruction: instruction, args: args}.inspect}\e[0m\n"
           require "pry"
@@ -118,10 +152,10 @@ class JsSimulatedBlocking
     end
 
     def function_invoke
-      function = stack.pop
-      env      = Env.new locals: {}, parent: function.env
-      stack.push function if function.internal?
-      [env, function.beginning]
+      fn_call = stack.peek
+      fn      = fn_call.function
+      env     = Env.new locals: {}, parent: fn.env
+      [env, fn.beginning]
     end
 
     def swap_top

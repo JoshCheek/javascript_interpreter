@@ -9,8 +9,8 @@ class JsSimulatedBlocking
     end
 
     def self.console(stdout:)
-      log = InternalFunction.new do |args|
-        stdout.puts(args.join ' ')
+      log = InternalFunction.new do |fn_call|
+        stdout.puts(fn_call.arguments.join ' ')
       end
 
       {log: log}

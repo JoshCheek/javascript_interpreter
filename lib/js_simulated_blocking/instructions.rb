@@ -47,13 +47,27 @@ class JsSimulatedBlocking
       instructions.length
     end
 
-    instruction(:push)              { |obj| [:push, obj] }
+    instruction(:push_fn_call) { [:push_fn_call] }
+    instruction(:set_function) { [:set_function] }
+    instruction(:set_retenv)   { [:set_retenv] }
+    instruction(:pop_fn_call)  { [:pop_fn_call] }
+    instruction(:set_retval)   { [:set_retval] }
+    instruction(:set_arg)      { |index| [:set_arg, index] }
+    def set_return_location
+      push_retloc = [:push]
+      instructions << push_retloc
+      instructions << [:set_return_location]
+      yield
+      push_retloc << current_offset
+    end
+
+    instruction(:push)              { |obj|   [:push, obj] }
+    instruction(:declare_arg)       { |index| [:declare_arg, index] }
     instruction(:push_location)     { [:push_location] }
     instruction(:push_array)        { [:push_array] }
     instruction(:push_env)          { [:push_env] }
     instruction(:pop_env)           { [:pop_env] }
     instruction(:declare_var)       { [:declare_var] }
-    instruction(:declare_arg)       { [:declare_arg] }
     instruction(:pop)               { [:pop] }
     instruction(:add)               { [:add] }
     instruction(:return)            { [:return] }

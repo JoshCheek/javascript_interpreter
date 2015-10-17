@@ -61,44 +61,32 @@ class JsSimulatedBlocking
     def visit_FunctionExprNode(node)
       begin_offset = instructions.next_offset
       instructions.function_begin -1
-      node.arguments.each do |arg|
+      node.arguments.each.with_index do |arg, index|
         instructions.push arg.value.intern
-        instructions.declare_arg
+        instructions.declare_arg index
       end
-      instructions.pop # args that are no longer being used
       accept node.function_body.value
       instructions.function_end begin_offset
     end
 
     def visit_FunctionCallNode(node)
-      # push the current environment
-      instructions.push_env
+      surround :push_fn_call, :pop_fn_call do
+        # TODO: set `this`
+        accept node.value
+        instructions.set_function
 
-      # placeholder for the return location
-      retloc_index = instructions.next_offset
-      instructions.push :placeholder
+        instructions.push_env
+        instructions.set_retenv
 
-      # find the function
-      accept node.value
+        node.arguments.value.each.with_index do |arg, index|
+          accept arg
+          instructions.set_arg index
+        end
 
-      # push the args into an array
-      instructions.push []
-      node.arguments.value.each do |arg|
-        accept arg              # push the arg
-        instructions.push_array # onto the array
+        instructions.set_return_location do
+          instructions.function_invoke
+        end
       end
-
-      # function is on the top of the stack
-      instructions.swap_top
-
-      # invoke the function
-      instructions.function_invoke
-
-      # update the return location
-      instructions.instructions[retloc_index][-1] = instructions.current_offset
-
-      # update the env
-      instructions.pop_env
     end
 
     def visit_TrueNode(node)    instructions.push true               end
@@ -115,7 +103,7 @@ class JsSimulatedBlocking
     def visit_ReturnNode(node)
       if node.value
         accept(node.value)
-        instructions.swap_top
+        instructions.set_retval
         instructions.return
       else
         # apparently "undefined" should be returned
@@ -140,34 +128,33 @@ class JsSimulatedBlocking
     end
 
     def visit_NewExprNode(node)
-      # push the current environment
-      instructions.push_env
+      surround :push_fn_call, :pop_fn_call do
+        accept node.value
+        instructions.set_function
 
-      # placeholder for the return location
-      retloc_index = instructions.next_offset
-      instructions.push :placeholder
+        instructions.push_env
+        instructions.set_retenv
 
-      # find the constructor
-      accept node.value
+        node.arguments.value.each.with_index do |arg, index|
+          accept arg
+          instructions.set_arg index
+        end
 
-      # push the args into an array
-      instructions.push []
-      node.arguments.value.each do |arg|
-        accept arg              # push the arg
-        instructions.push_array # onto the array
+        instructions.set_return_location do
+          instructions.new_object
+          instructions.function_invoke
+        end
+
+        instructions.copy_this
+        instructions.swap_top
+        instructions.set_retval
       end
+    end
 
-      # constructor is on the top of the stack
-      instructions.swap_top
-
-      # instantiation
-      instructions.new_object
-
-      # update the return location
-      instructions.instructions[retloc_index][-1] = instructions.current_offset
-
-      # update the env
-      instructions.pop_env
+    def surround(pre, post, &block)
+      instructions.__send__ pre
+      block.call
+      instructions.__send__ post
     end
   end
 end
