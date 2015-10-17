@@ -5,6 +5,10 @@ class JsSimulatedBlocking
     def internal?
       false
     end
+
+    def inspect
+      "#<#{self.class.to_s.sub 'JsSimulatedBlocking::', ''} #{beginning}-#{ending} env locals: #{env.all_visible.keys.inspect}>"
+    end
   end
 
   class InternalFunction < Function

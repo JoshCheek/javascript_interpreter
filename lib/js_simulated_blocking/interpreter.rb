@@ -1,4 +1,5 @@
 require 'js_simulated_blocking/functions'
+require 'js_simulated_blocking/callstack'
 
 class JsSimulatedBlocking
   class Interpreter
@@ -7,11 +8,11 @@ class JsSimulatedBlocking
     def initialize(instructions:, env:)
       self.instructions = instructions
       self.env          = env
-      self.stack        = []
+      self.stack        = Callstack.new
     end
 
     def result
-      stack.last
+      stack.peek
     end
 
     def call
@@ -33,10 +34,11 @@ class JsSimulatedBlocking
         when :declare_var
           name  = stack.pop
           value = stack.pop
+          # guessing I put the objects onto the stack in the wrong order for this one >.<
           env.declare name, value
         when :declare_arg
           name  = stack.pop
-          value = stack.last.pop
+          value = stack.peek.pop
           env.declare name, value
         when :pop
           stack.pop
@@ -65,7 +67,7 @@ class JsSimulatedBlocking
           stack.push second
         when :push_array
           element = stack.pop
-          array   = stack.last
+          array   = stack.peek
           array.push element
         when :function_invoke
           function       = stack.pop
