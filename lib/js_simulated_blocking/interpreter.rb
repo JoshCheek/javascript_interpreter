@@ -67,23 +67,10 @@ class JsSimulatedBlocking
           prototype        = env.new_object
           function         = Function.new(env, beginning_offset, ending_offset, prototype)
           stack.push(function)
-        when :push_location
-          stack.push current_offset
         when :push_env
           stack.push env
-        when :pop_env
-          env = stack.pop
-          if !env.kind_of?(JsSimulatedBlocking::Env)
-            instructions.map.with_index { |instr, index| [index, *instr] }
-            require "pry"
-            binding.pry
-          end
         when :swap_top
           swap_top
-        when :push_array # TODO: rename this to array_append
-          element = stack.pop
-          array   = stack.peek
-          array.push element
         when :function_invoke
           env, current_offset = function_invoke
         when :function_internal

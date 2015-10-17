@@ -32,8 +32,18 @@ class JsSimulatedBlocking
       pop
     end
 
+    find_unused = false
+    $seen       = []
+    $expected   = []
+    at_exit {
+      unseen = $expected - $seen.uniq
+      puts "UNUSED INSTRUCTIONS: #{unseen.inspect}" if find_unused && unseen.any?
+    }
+
     def self.instruction(name, &body)
+      $expected << name
       define_method name do |*args|
+        $seen << name
         instructions << instance_exec(*args, &body)
         self
       end
@@ -53,7 +63,10 @@ class JsSimulatedBlocking
     instruction(:pop_fn_call)  { [:pop_fn_call] }
     instruction(:set_retval)   { [:set_retval] }
     instruction(:set_arg)      { |index| [:set_arg, index] }
+
+    $expected <<
     def set_return_location
+      $seen << __method__
       push_retloc = [:push]
       instructions << push_retloc
       instructions << [:set_return_location]
@@ -63,10 +76,7 @@ class JsSimulatedBlocking
 
     instruction(:push)              { |obj|   [:push, obj] }
     instruction(:declare_arg)       { |index| [:declare_arg, index] }
-    instruction(:push_location)     { [:push_location] }
-    instruction(:push_array)        { [:push_array] }
     instruction(:push_env)          { [:push_env] }
-    instruction(:pop_env)           { [:pop_env] }
     instruction(:declare_var)       { [:declare_var] }
     instruction(:pop)               { [:pop] }
     instruction(:add)               { [:add] }
