@@ -9,11 +9,13 @@ class JsSimulatedBlocking
     end
 
     def self.console(env:, stdout:)
-      log = InternalFunction.new env: env, name: 'console.log'.freeze do |fn_call|
+      console = env.new_object
+
+      console[:log] = log = InternalFunction.new env: env, name: 'console.log'.freeze do |fn_call|
         stdout.puts(fn_call.arguments.join ' ')
       end
 
-      {log: log}
+      console
     end
 
     def self.Date(env:, time:)

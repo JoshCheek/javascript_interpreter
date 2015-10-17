@@ -1,9 +1,19 @@
 class JsSimulatedBlocking
   class JsObject
-    attr_accessor :constructor, :__proto__
+    attr_accessor :constructor, :__proto__, :hash
+
     def initialize(constructor: nil, __proto__: nil)
       self.constructor = constructor
       self.__proto__   = __proto__
+      self.hash        = {}
+    end
+
+    def []=(key, value)
+      hash[key] = value
+    end
+
+    def fetch(*args, &block)
+      hash.fetch *args, &block
     end
   end
 
