@@ -55,13 +55,13 @@ RSpec.describe 'The JS interpreter' do
     interpreter
   end
 
-  it 'can set and lookup local variables', passing: true do
+  it 'can set and lookup local variables' do
     interprets! 'var a = 1, b = 2; a+b',
                 locals: {a: 1, b: 2},
                 result: 3
   end
 
-  describe 'function instantiation', passing: true do
+  describe 'function instantiation' do
     def assert_object(object, assertions)
       assertions.each do |type, expectation|
         case type
@@ -82,7 +82,7 @@ RSpec.describe 'The JS interpreter' do
     end
   end
 
-  describe 'method invocation', passing: true do
+  describe 'method invocation' do
     it 'evaluates to the return value when called' do
       interprets! 'var fn = function() { return 123 }; fn() + fn()', result: 246
     end
@@ -105,7 +105,7 @@ RSpec.describe 'The JS interpreter' do
   end
 
   describe 'core libs' do
-    describe 'singleton literals', passing: true do
+    describe 'singleton literals' do
       it 'interprets true' do
         interprets! 'true', result: true
       end
@@ -117,7 +117,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'numbers', passing: true do
+    describe 'numbers' do
       it 'evaluates to a floating point number of the same value' do
         interpreter = interprets! '1'
         expect(interpreter.result).to eq 1.0
@@ -129,7 +129,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'String', passing: true do
+    describe 'String' do
       it '#+ concatenates' do
         interprets! '"a" + "b"', result: "ab"
       end
@@ -159,7 +159,7 @@ RSpec.describe 'The JS interpreter' do
       end
     end
 
-    describe 'console', passing: true do
+    describe 'console' do
       specify '#log prints strings to stdout' do
         interprets! 'console.log("hello")', logged: "hello\n"
       end
