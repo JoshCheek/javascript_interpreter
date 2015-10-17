@@ -1,6 +1,12 @@
-require 'js_simulated_blocking/env'
-
 class JsSimulatedBlocking
+  class JsObject
+    attr_accessor :constructor, :__proto__
+    def initialize(constructor: nil, __proto__: nil)
+      self.constructor = constructor
+      self.__proto__   = __proto__
+    end
+  end
+
   Function = Struct.new :env, :beginning, :ending, :prototype do
     def internal?
       false
@@ -40,7 +46,7 @@ class JsSimulatedBlocking
 
     attr_accessor :name, :block
 
-    def initialize(name: nil, env: Env.new, &block)
+    def initialize(env:, name: nil, &block)
       self.name  = name
       self.block = block
       prototype = :FIXME_where_to_get_this?

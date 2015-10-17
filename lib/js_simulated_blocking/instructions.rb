@@ -1,4 +1,4 @@
-require 'js_simulated_blocking/functions'
+require 'js_simulated_blocking/data_structures'
 
 class JsSimulatedBlocking
   class Instructions

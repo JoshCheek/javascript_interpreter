@@ -1,23 +1,23 @@
-require 'js_simulated_blocking/functions'
+require 'js_simulated_blocking/env'
+require 'js_simulated_blocking/data_structures'
 
 class JsSimulatedBlocking
   class Stdlib
-    def self.global(stdout:, time:)
-      Env.new
-         .declare(:console, console(stdout: stdout))
-         .declare(:Date,    Date(time: time))
+    def self.global(stdout:, time:, env: Env.new)
+      env.declare(:console, console(env: env, stdout: stdout))
+         .declare(:Date,    Date(env: env, time: time))
     end
 
-    def self.console(stdout:)
-      log = InternalFunction.new do |fn_call|
+    def self.console(env:, stdout:)
+      log = InternalFunction.new env: env, name: 'console.log'.freeze do |fn_call|
         stdout.puts(fn_call.arguments.join ' ')
       end
 
       {log: log}
     end
 
-    def self.Date(time)
-      InternalFunction.new name: :Date do |date|
+    def self.Date(env:, time:)
+      InternalFunction.new env: env, name: :Date do |fn_call|
         require "pry"
         binding.pry
       end

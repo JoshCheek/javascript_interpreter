@@ -1,3 +1,5 @@
+require 'js_simulated_blocking/data_structures'
+
 class JsSimulatedBlocking
   class Env
     def initialize(locals: {}, parent: NULL)
@@ -65,14 +67,6 @@ class JsSimulatedBlocking
 
     def declare(name, value)
       raise "Cannot declare variables to the null env! #{name.inspect}, #{value.inspect}"
-    end
-
-    class JsObject
-      attr_accessor :constructor, :__proto__
-      def initialize(constructor: nil, __proto__: nil)
-        self.constructor = constructor
-        self.__proto__   = __proto__
-      end
     end
 
     def default_prototype
