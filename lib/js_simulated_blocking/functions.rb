@@ -7,7 +7,30 @@ class JsSimulatedBlocking
     end
 
     def inspect
-      "#<#{self.class.to_s.sub 'JsSimulatedBlocking::', ''} #{beginning}-#{ending} env locals: #{env.all_visible.keys.inspect}>"
+      "#<#{classname} #{beginning}-#{ending} env-locals: #{env.all_visible.keys.inspect}>"
+    end
+
+    def pretty_print(q)
+      q.group 1, "#<#{classname} ", ">" do
+        q.text beginning.to_s
+        q.text "-"
+        q.text ending.to_s
+        q.text " "
+        q.text "locals"
+        q.text "="
+        q.text "["
+        env.all_visible.keys.each_with_index do |key, index|
+          q.text ', ' unless index.zero?
+          key.pretty_print q
+        end
+        q.text "]"
+      end
+    end
+
+    private
+
+    def classname
+      self.class.to_s.sub 'JsSimulatedBlocking::', ''
     end
   end
 

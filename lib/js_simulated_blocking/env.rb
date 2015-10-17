@@ -20,10 +20,32 @@ class JsSimulatedBlocking
 
     def inspect(internal=false)
       if internal
-        "keys:#{locals.keys.inspect} -> #{parent.inspect true}"
+        "#{locals.keys.inspect} -> #{parent.inspect true}"
       else
-        "#<#{self.class.to_s.sub 'JsSimulatedBlocking::', ''} #{inspect true}>"
+        "#<#{classname} keys=#{inspect true}>"
       end
+    end
+
+    def pretty_print(q, internal=false)
+      if internal
+        q.group do
+          locals.keys.pretty_print q
+          q.text '->'
+          parent.pretty_print q, true
+        end
+      else
+        q.group 1, "#<#{classname} ", ">" do
+          q.text 'keys'
+          q.text '='
+          pretty_print q, true
+        end
+      end
+    end
+
+    private
+
+    def classname
+      self.class.to_s.sub 'JsSimulatedBlocking::', ''
     end
   end
 
@@ -41,8 +63,12 @@ class JsSimulatedBlocking
       raise "Cannot declare variables to the null env! #{name.inspect}, #{value.inspect}"
     end
 
-    def inspect(*)
+    def inspect(internal)
       "Env::NULL"
+    end
+
+    def pretty_print(q, internal)
+      q.text inspect(internal)
     end
   end
 end

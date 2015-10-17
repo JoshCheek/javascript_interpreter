@@ -16,6 +16,7 @@ class JsSimulatedBlocking
       @stack.push obj
     end
 
+
     def inspect
       inspected     = "#<Callstack\n"
       index_width   = @stack.length.to_s.length
@@ -30,6 +31,27 @@ class JsSimulatedBlocking
       end
       inspected << inspections.join(",\n")
       inspected << "\n>\n"
+    end
+
+    def pretty_print(q)
+      opening = "#<Callstack"
+      closing = ">"
+      q.group 1, opening, closing do
+        if @stack.any?
+          q.breakable
+          q.text "", q.maxwidth - opening.length
+        end
+
+        format = "%-#{@stack.length.to_s.length+1}s "
+        position = 0
+        q.seplist @stack do |entry|
+          q.group do
+            position += 1
+            q.text sprintf(format, "#{position}.")
+            entry.pretty_print q
+          end
+        end
+      end
     end
   end
 end
