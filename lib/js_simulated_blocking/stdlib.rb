@@ -21,8 +21,7 @@ class JsSimulatedBlocking
 
     def self.Date(env:, time:)
       env.new_internal_function name: 'Date'.freeze do |fn_call|
-        # require "pry"
-        # binding.pry
+        fn_call.this.set_internal time: time.now
       end
     end
   end

@@ -15,6 +15,20 @@ class JsSimulatedBlocking
     def fetch(*args, &block)
       hash.fetch *args, &block
     end
+
+    def set_internal(attributes)
+      internal_data.merge! attributes
+    end
+
+    def get_internal(key)
+      internal_data.fetch key
+    end
+
+    private
+
+    def internal_data
+      @internal_data ||= {}
+    end
   end
 
   class Function < JsObject

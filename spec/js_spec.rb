@@ -8,26 +8,16 @@ end
 
 require 'time'
 class MockTime < Time
-  def self.for(callable)
-    callable ||= lambda { Time.now }
-    Class.new self do
-      define_method(:now) { callable.call }
+  class << self
+    attr_accessor :now_proc
+
+    def now
+      (now_proc || lambda { super }).call
     end
-  end
 
-  def where_now_is(callable)
-    @get_now = callable
-    self
-  end
-
-  def now
-    get_now.call
-  end
-
-  private
-
-  def get_now
-    @get_now || lambda { super }
+    def for(callable)
+      Class.new(self) { self.now_proc = callable }
+    end
   end
 end
 
@@ -136,14 +126,11 @@ RSpec.describe 'The JS interpreter' do
     end
 
     describe 'Date' do
-      it 'initializes to the current time', not_implemented: true do
+      it 'initializes to the current time' do
         ruby_time   = Time.now
-        interpreter = interprets! 'new Date()', time: lambda { time }
+        interpreter = interprets! 'new Date()', time: lambda { ruby_time }
         js_time     = interpreter.result
-        expect(js_time.year ).to eq ruby_time.year
-        expect(js_time.month).to eq ruby_time.month
-        expect(js_time.day  ).to eq ruby_time.day
-        expect(js_time.sec  ).to eq ruby_time.sec
+        expect(js_time.get_internal :time).to eq ruby_time
       end
 
       it 'has a to_s that matches "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"', not_implemented: true do
