@@ -133,9 +133,11 @@ RSpec.describe 'The JS interpreter' do
         expect(js_time.get_internal :time).to eq ruby_time
       end
 
-      it 'has a to_s that matches "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"', not_implemented: true do
+      it 'has a to_s that matches "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"', not_implemented: true,  t:true do
         ruby_time = Time.parse "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"
-        interprets! 'new Date().toString()', time: lambda { time }, result: "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"
+        interprets! 'new Date().toString()',
+                    time:   lambda { ruby_time },
+                    result: "Thu Oct 15 2015 04:56:32 GMT-0600 (MDT)"
       end
 
       it 'subtracts to milliseconds', not_implemented: true do

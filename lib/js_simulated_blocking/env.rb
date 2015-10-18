@@ -2,11 +2,14 @@ require 'js_simulated_blocking/data_structures'
 
 class JsSimulatedBlocking
   class Env
-    def initialize(locals: {}, parent: NULL)
-      self.parent, self.locals = parent, locals
+    attr_accessor :this, :parent, :locals
+
+    def initialize(this:, locals: {}, parent: NULL)
+      self.this   = this
+      self.parent = parent
+      self.locals = locals
     end
 
-    attr_accessor :parent, :locals
     def resolve(name)
       locals.fetch(name) { parent.resolve name }
     end
@@ -84,11 +87,15 @@ class JsSimulatedBlocking
     end
 
     def new_object(**args)
+      # maybeh?
+      # args[:constructor] = Object
+      # args[:prototype]   = ??
       JsObject.new **args
     end
 
     def new_internal_function(**args, &block)
-      args[:env] ||= self
+      args[:env]       ||= self
+      args[:prototype] ||= new_object
       InternalFunction.new **args, &block
     end
 

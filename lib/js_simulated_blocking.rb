@@ -12,7 +12,21 @@ class JsSimulatedBlocking
 
   attr_accessor :interpreter
   def initialize(instructions:, stdout:, time:)
-    global_env = Stdlib.global(stdout: stdout, time: time)
+    object_function = InternalFunction.new(
+      name:        'Object'.freeze,
+      constructor: :FIXME,
+      __proto__:   :FIXME,
+      env:         :FIXME,
+      prototype:   :FIXME,
+    ) { |fn_call|
+      require "pry"
+      binding.pry
+    }
+
+    toplevel_object = JsObject.new(constructor: object_function, __proto__: nil)
+    global_env      = Env.new this: toplevel_object
+
+    Stdlib.global(stdout: stdout, time: time, env: global_env)
 
     self.interpreter = Interpreter.new(
       instructions: instructions,

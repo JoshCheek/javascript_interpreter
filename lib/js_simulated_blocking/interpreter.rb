@@ -85,7 +85,12 @@ class JsSimulatedBlocking
         when :dot_access
           name   = stack.pop
           obj    = stack.pop
-          method = obj.fetch name
+          begin
+            method = obj.fetch name
+          rescue NoMethodError
+            require "pry"
+            binding.pry
+          end
           stack.push method
         when :new_pre
           fn_call      = stack.peek
@@ -146,7 +151,7 @@ class JsSimulatedBlocking
     def function_invoke
       fn_call = stack.peek
       fn      = fn_call.function
-      env     = Env.new locals: {}, parent: fn.env
+      env     = Env.new this: fn_call.this, locals: {}, parent: fn.env
       [env, fn.beginning]
     end
 

@@ -12,8 +12,10 @@ class JsSimulatedBlocking
       hash[key] = value
     end
 
-    def fetch(*args, &block)
-      hash.fetch *args, &block
+    def fetch(*args)
+      hash.fetch *args do
+        __proto__.fetch *args
+      end
     end
 
     def set_internal(attributes)
@@ -83,7 +85,6 @@ class JsSimulatedBlocking
     def initialize(name: nil, **rest, &block)
       self.name  = name
       self.block = block
-      rest[:prototype] ||= :FIXME_where_to_get_this?
       super beginning: BEGINNING, ending: ENDING, **rest
     end
 
